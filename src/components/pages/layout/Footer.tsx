@@ -54,7 +54,8 @@ export default function Footer() {
             >
               <i className="bi bi-whatsapp text-xl"></i>
               <p className="font-normal mb-0 text-center lg:text-start">
-                +62 812-5999-0845 (Satria)
+                Raina : +62 811-3450-929
+
               </p>
             </Link>
             <Link
@@ -63,7 +64,8 @@ export default function Footer() {
             >
               <i className="bi bi-whatsapp text-xl"></i>
               <p className="font-normal mb-0 text-center lg:text-start">
-                +62 812-5279-5787 (Kelvin)
+                Hilma : +62 813-9020-6217
+
               </p>
             </Link>
             <Link

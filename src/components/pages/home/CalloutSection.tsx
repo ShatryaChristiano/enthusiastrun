@@ -110,20 +110,26 @@ export default function CalloutSection() {
             { item_label: "5K RUN", item_href: "/register/CATEGORY_5K" },
           ]}
         ></TextDropdownPanelCallout>
-        <h1 className="text-4xl w-[80%] sm:w-full">ARE YOU READY FOR ENTHUSIAST FOAM RUN?</h1>
-        <h3 className="text-xl text-[#9ED486]">10 MEI 2026</h3>
+        <h1 className="text-4xl w-[80%] sm:w-full">ARE YOU READY FOR ENTHUSIAST SPLASH RUN?</h1>
+        <h3 className="text-xl text-[#9ED486]">7 MEI 2027</h3>
       </div>
       <div ref={descRef} className="flex flex-col gap-1 items-center sm:items-start">
         <h3
           className="text-xl w-[80%] font-bold font-futura text-center sm:text-justify"
         >
-          Bersiaplah! Saatnya bergabung dalam gelombang energi dan keseruan di
-          Enthusiast Foam Run Vol. 2!
+          Get ready for an exciting fun run filled with energy, challenges, and togetherness at Enthusiast Vol. 3!
         </h3>
         <h3 className="about text-2xl w-[80%] font-futura text-center sm:text-justify">
           {" "}
           {/* <span className="about font-bold">Enthusiast Foam Run is an annual event held by Ciputra University Surabaya under the Student Organization Department of the Student Union IBM. This event serves as a platform for everyone to embrace an active lifestyle while enjoying a fun and unique running experience through foam-filled courses.</span> */}
-          Take a new step, push your boundaries, and experience the most exciting foam run at Universitas Ciputra Surabaya! Are you ready to Break the Limits with Enthusiast Foam Run?
+          Organized by the <strong>
+            International Business Management Major at Universitas Ciputra Surabaya</strong>
+            , Splash Run invites you to run, splash, and chase the thrill while creating unforgettable memories.
+        </h3>
+      </div>
+      <div className="flex gap-1 flex-col w-[80%] items-center sm:items-start">
+        <h3 className="text-xl font-futura text-center sm:text-justify">
+          <strong>📍 Location: Universitas Ciputra Surabaya</strong>
         </h3>
       </div>
       <div className="flex gap-1 flex-col w-[80%] items-center sm:items-start">
@@ -131,7 +137,7 @@ export default function CalloutSection() {
           Click the button below to view more informations{" "}
         </h3>
         <h3 className="text-xl font-futura font-bold text-justify">
-          {"Let's"} run, splash, and have fun!
+          {"Let's"} run, splash, and chase the thrill!
         </h3>
       </div>
       <Link

@@ -85,7 +85,7 @@ export default function page() {
                   Surabaya
                 </p>
                 <p>
-                  <span className="font-bold">Date</span> : 9 MAY 2026
+                  <span className="font-bold">Date</span> : 7-8 MAY 2027
                 </p>
                 <p>
                   <span className="font-bold">Flag Off Time</span> :
