@@ -57,13 +57,13 @@ export default function page() {
           </h3> */}
           <div className="w-[80%] h-1 bg-white/80"></div>
           <div className="flex justify-between flex-col md:flex-row items-start w-[80%] font-impact text-xl sm:text-lg lg:text-xl">
-            <Link href={"https://wa.me/+6281259990845"} target="_blank" className="w-fit hover:underline text-justify max-h-[250px] overflow-y-auto flex gap-2 items-start">
+            <Link href={"https://wa.me/+628113450929"} target="_blank" className="w-fit hover:underline text-justify max-h-[250px] overflow-y-auto flex gap-2 items-start">
               <FaWhatsapp className="mt-1" />
-              <h1>081259990845 (Satria)</h1>
+              <h1>Raina : +62 811-3450-929</h1>
             </Link>
-            <Link href={"https://wa.me/+6281252795787"} target="_blank" className="w-fit hover:underline text-justify max-h-[250px] overflow-y-auto flex gap-2 items-start">
+            <Link href={"https://wa.me/+6281390206217"} target="_blank" className="w-fit hover:underline text-justify max-h-[250px] overflow-y-auto flex gap-2 items-start">
               <FaWhatsapp className="mt-1" />
-              <h1>081252795787 (Kelvin)</h1>
+              <h1>Hilma : +62 813-9020-6217</h1>
             </Link>
             <Link href={"https://www.instagram.com/enthusiast.run/"} target="_blank" className="w-fit hover:underline text-justify max-h-[250px] overflow-y-auto flex gap-2 items-start">
               <FaInstagram className="mt-1" />

@@ -49,23 +49,25 @@ export default function Footer() {
           <div className="flex text-lg flex-col gap-4 items-center lg:items-start max-w-[400px]">
             <h2 className="text-2xl font-impact">Contact Us</h2>
             <Link
-              href={"tel:+6281259990845"}
+              href="https://wa.me/628113450929"
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex justify-center hover:underline items-center gap-2"
             >
               <i className="bi bi-whatsapp text-xl"></i>
               <p className="font-normal mb-0 text-center lg:text-start">
                 Raina : +62 811-3450-929
-
               </p>
             </Link>
             <Link
-              href={"tel:+6281252795787"}
+              href="https://wa.me/6281390206217"
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex justify-center hover:underline items-center gap-2"
             >
               <i className="bi bi-whatsapp text-xl"></i>
               <p className="font-normal mb-0 text-center lg:text-start">
                 Hilma : +62 813-9020-6217
-
               </p>
             </Link>
             <Link

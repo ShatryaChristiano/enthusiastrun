@@ -51,13 +51,13 @@ export default function RegistrationPage() {
   // Determine if each phase is active
 
   const isSuperEarlyActive = superEarlyCount < (is5K ? 0 : 0);
-  const isEarlyBirdActive = !isSuperEarlyActive && earlyBirdCount < (is5K ? 0 : 0); // aslinya 480 : 280
+  const isEarlyBirdActive = !isSuperEarlyActive && earlyBirdCount < (is5K ? 480 : 280); // aslinya 480 : 280
   const isRegularActive = !isSuperEarlyActive && !isEarlyBirdActive;
 
 
   const isSuperEarlySoldOut = superEarlyCount >= (is5K ? 0 : 0)
-  const isEarlyBirdSoldOut = earlyBirdCount >= (is5K ? 0 : 0) // aslinya 480 : 280
-  const isRegularSoldOut = true;
+  const isEarlyBirdSoldOut = earlyBirdCount >= (is5K ? 480 : 280) // aslinya 480 : 280
+  const isRegularSoldOut = false;
 
   return (
     <div className="overflow-hidden">
@@ -133,7 +133,7 @@ export default function RegistrationPage() {
             title="Regular"
             price={is5K ? "249000" : "299000"}
             href={`/register/${slug}/normal`}
-            isActive={false}
+            isActive={isRegularActive}
             isSoldOut={isRegularSoldOut}
             isAdminClickable={isAdmin}
           />
