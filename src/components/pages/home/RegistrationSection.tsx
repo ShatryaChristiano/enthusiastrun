@@ -35,11 +35,13 @@ function getTimeParts(ms: number): TimeParts {
 }
 
 export function Countdown() {
+  const [mounted, setMounted] = React.useState(false);
   const [timeLeft, setTimeLeft] = React.useState<TimeParts>(() =>
     getTimeParts(TARGET_DATE.getTime() - Date.now())
   );
 
   React.useEffect(() => {
+    setMounted(true);
     const id = setInterval(() => {
       const parts = getTimeParts(TARGET_DATE.getTime() - Date.now());
       setTimeLeft(parts);
@@ -64,15 +66,17 @@ export function Countdown() {
               <div
                 className={`flex h-24 py-16 w-full font-impact border-4 border-background shadow-lg items-center justify-center rounded-lg bg-countdown-background shadow-md sm:h-32`}
               >
-                <Counter
-                  value={value}
-                  places={key === "days" ? [100, 10, 1] : [10, 1]} // Allow 3 digits for days
-                  fontSize={40}
-                  textColor="#00476D"
-                  fontWeight="bold"
-                  gradientFrom="transparent"
-                  gradientTo="transparent"
-                />
+                {mounted && (
+                  <Counter
+                    value={value}
+                    places={key === "days" ? [100, 10, 1] : [10, 1]}
+                    fontSize={40}
+                    textColor="#00476D"
+                    fontWeight="bold"
+                    gradientFrom="transparent"
+                    gradientTo="transparent"
+                  />
+                )}
               </div>
 
               <div className="w-full font-impact rounded-md bg-countdown-background border-4 border-background shadow-lg py-1.5 text-center text-sm font-regular text-[#00476D] sm:py-2 sm:text-base">
