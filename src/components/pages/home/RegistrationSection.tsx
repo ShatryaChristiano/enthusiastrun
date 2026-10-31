@@ -22,7 +22,7 @@ function getNextTargetDate(month: number, day: number, hour: number, minute = 0)
 }
 
 // 10 Mei 2026 05:30
-const TARGET_DATE = new Date(2027, 4, 7, 5, 30, 0, 0);
+const TARGET_DATE = new Date(2027, 4, 9, 5, 30, 0, 0);
 
 function getTimeParts(ms: number): TimeParts {
   if (ms <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };

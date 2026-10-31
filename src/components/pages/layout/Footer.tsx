@@ -117,7 +117,7 @@ export default function Footer() {
       </div>
       <div className="bg-black/10 w-full">
         <p className="text-xl fw-normal py-4 text-center m-0 text-white">
-          © 2026 ENTHUSIAST. ALL RIGHTS RESERVED.
+          © 2027 ENTHUSIAST. ALL RIGHTS RESERVED.
         </p>
       </div>
     </footer>

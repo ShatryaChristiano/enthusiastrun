@@ -110,8 +110,9 @@ export default function CalloutSection() {
             { item_label: "5K RUN", item_href: "/register/CATEGORY_5K" },
           ]}
         ></TextDropdownPanelCallout>
-        <h1 className="text-4xl w-[80%] sm:w-full">ARE YOU READY FOR ENTHUSIAST SPLASH RUN?</h1>
-        <h3 className="text-xl text-[#9ED486]">7 MEI 2027</h3>
+        <h1 className="text-4xl w-[80%] sm:w-full">ARE YOU READY FOR INTERNATIONAL ENTHUSIAST SPLASH RUN COMPETITION? 
+</h1>
+        <h3 className="text-xl text-[#9ED486]">9 MEI 2027</h3>
       </div>
       <div ref={descRef} className="flex flex-col gap-1 items-center sm:items-start">
         <h3

@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -7,6 +8,7 @@ import LogoutButton from "./LogoutButton";
 export default function UserProfileButton() {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -15,6 +17,7 @@ export default function UserProfileButton() {
         setOpen(false);
       }
     }
+
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
@@ -27,6 +30,9 @@ export default function UserProfileButton() {
       .slice(0, 2)
       .toUpperCase() || "U";
 
+  const imageUrl = session?.user?.image;
+  const showImage = imageUrl && failedImageUrl !== imageUrl;
+
   return (
     <div ref={ref} className="relative">
       <button
@@ -35,15 +41,19 @@ export default function UserProfileButton() {
         onClick={() => setOpen((v) => !v)}
         className="w-10 h-10 rounded-full overflow-hidden bg-zinc-200 flex items-center justify-center focus:outline-none"
       >
-        {session?.user?.image ? (
+        {showImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={session.user.image}
+            src={imageUrl}
             alt="avatar"
+            referrerPolicy="no-referrer"
+            onError={() => setFailedImageUrl(imageUrl)}
             className="w-full h-full object-cover"
           />
         ) : (
-          <span className="text-sm font-semibold text-black">{initials}</span>
+          <span className="text-sm font-semibold text-black">
+            {initials}
+          </span>
         )}
       </button>
 
@@ -56,6 +66,7 @@ export default function UserProfileButton() {
           >
             Dashboard
           </Link>
+
           {session?.user?.role === "admin" && (
             <Link
               href="/dashboard/admin"
@@ -65,6 +76,7 @@ export default function UserProfileButton() {
               Admin
             </Link>
           )}
+
           <LogoutButton />
         </div>
       )}
