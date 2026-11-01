@@ -61,7 +61,10 @@ model Registration {
   qrCodeClaimed   Boolean   @default(false)
   qrCodeClaimedAt DateTime?
 
-  qrCodeId  String?
+  emailStatus     EmailStatus @default(NOT_SENT)
+  emailSentAt     DateTime?
+
+  qrCodeId  String?  @unique
   qrCode    QRCode?  @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
   voucherId String?
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -73,9 +76,10 @@ model Registration {
 }
 
 model QRCode {
-  id            String         @id @default(cuid())
-  qrCodeUrl     String
-  registrations Registration[]
+  id           String        @id @default(cuid())
+  token        String        @unique @default(cuid())
+  qrCodeUrl    String
+  registration Registration?
 }
 
 model Voucher {
@@ -165,6 +169,12 @@ enum ChosenPackage {
   community_package_20
   community_package_30
   community_package_40
+}
+
+enum EmailStatus {
+  NOT_SENT
+  SENT
+  FAILED
 }
 
 enum Role {

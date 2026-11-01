@@ -132,6 +132,14 @@ export default function Navbar() {
               >
                 RACE PACK COLLECTION VENUE
               </Link>
+              <Link
+                href="/about/tm"
+                rel="technical meeting"
+                className="text-white font-futura hover:text-[#4BCFFC]"
+                onClick={closeSheet}
+              >
+                TECHNICAL MEETING
+              </Link>
             </div>
             <span className="w-[90%] h-0.5 opacity-50 bg-white"></span>
             {/* Registration Section */}
@@ -189,6 +197,10 @@ export default function Navbar() {
             {
               item_label: "RACE PACK COLLECTION VENUE",
               item_href: "/about/race-venue",
+            },
+            {
+              item_label: "TECHNICAL MEETING",
+              item_href: "/about/tm",
             },
           ]}
         ></TextDropdownPanel>

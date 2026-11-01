@@ -1,5 +1,6 @@
 export type RegistrationCategory = "CATEGORY_5K";
 export type RegistrationStatus = "pending" | "confirmed" | "cancelled";
+export type EmailStatus = "NOT_SENT" | "SENT" | "FAILED";
 export type Gender = "Male" | "Female";
 export type BloodType = "A" | "B" | "AB" | "O";
 export type JerseySize = "XS" | "S" | "M" | "L" | "XL" | "XXL" | "XXXL" | "FOUR_XL" | "FIVE_XL" | "SIX_XL";
@@ -78,8 +79,11 @@ export interface Registration extends RegistrationData {
   paymentStatus: boolean;
   paymentDate?: Date | null;
   createdAt: Date;
+  qrCodeId?: string | null;
   qrCodeClaimed?: boolean | null;
   qrCodeClaimedAt?: Date | null;
+  emailStatus?: EmailStatus;
+  emailSentAt?: Date | null;
   updatedAt: Date;
   user?: {
     name: string | null;
@@ -87,9 +91,10 @@ export interface Registration extends RegistrationData {
     image: string | null;
   };
   qrCode?: {
-    qrCodeId: string;
+    id: string;
+    token: string;
     qrCodeUrl: string;
-  };
+  } | null;
 }
 
 export interface BundlingParticipant {

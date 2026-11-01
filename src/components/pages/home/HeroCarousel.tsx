@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
+import Image from "next/image";
 import Autoplay from "embla-carousel-autoplay";
-import { Card } from "@/components/ui/card";
 import {
   Carousel,
   CarouselContent,
@@ -27,16 +27,12 @@ export function HeroCarousel() {
   const [count, setCount] = React.useState(0);
 
   React.useEffect(() => {
-    if (!api) {
-      return;
-    }
+    if (!api) return;
 
     setCount(api.scrollSnapList().length);
     setCurrent(api.selectedScrollSnap());
 
-    const onSelect = () => {
-      setCurrent(api.selectedScrollSnap());
-    };
+    const onSelect = () => setCurrent(api.selectedScrollSnap());
 
     api.on("select", onSelect);
     api.on("reInit", onSelect);
@@ -48,9 +44,7 @@ export function HeroCarousel() {
   }, [api]);
 
   const scrollTo = React.useCallback(
-    (index: number) => {
-      api?.scrollTo(index);
-    },
+    (index: number) => api?.scrollTo(index),
     [api]
   );
 
@@ -62,19 +56,26 @@ export function HeroCarousel() {
       onMouseEnter={plugin.current.stop}
       onMouseLeave={plugin.current.reset}
     >
-      <CarouselContent className="">
+      <CarouselContent>
         {images.map((imageUrl, index) => (
           <CarouselItem key={index} className="p-0">
-           
-            <Card
-              style={{ backgroundImage: `url(${imageUrl})` }}
-              className="h-[70vh] p-0 rounded-none border-none bg-cover bg-center flex justify-center items-center aspect-auto object-cover"
-            >
-               {/* {index == 0 &&
-              <Countdown></Countdown>
-               } */}
-            </Card>
-            
+            {/*
+              Mobile  : semua slide pakai tinggi yang sama (aspect-video ≈ rasio foto utama).
+                        Background putih + object-contain → foto di-center,
+                        sisa ruang kosong jadi putih (bukan hitam).
+              Desktop : h-[70vh] fixed + object-cover, tampilan sinematik.
+            */}
+            <div className="relative w-full aspect-video bg-white sm:aspect-auto sm:h-[70vh] sm:bg-transparent">
+              <Image
+                src={imageUrl}
+                alt={`Enthusiast Run slide ${index + 1}`}
+                fill
+                priority={index === 0}
+                draggable={false}
+                sizes="100vw"
+                className="object-contain sm:object-cover"
+              />
+            </div>
           </CarouselItem>
         ))}
       </CarouselContent>

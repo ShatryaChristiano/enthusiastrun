@@ -54,7 +54,7 @@ const COMMUNITY_30_TOTAL_PARTICIPANTS = 30;
 const COMMUNITY_40_TOTAL_PARTICIPANTS = 40;
 
 interface RegistrationFormProps {
-  category: "CATEGORY_5K";
+  category: "Category_5K";
   type: "super_early_bird" | "early_bird" | "regular";
   mahasiswaUCEnabled?: boolean;
 }
@@ -76,7 +76,7 @@ export default function RegistrationForm({
   const [rekeningName, setRekeningName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const is5K = category === "CATEGORY_5K";
+  const is5K = category === "Category_5K";
   const prices =
     type === "super_early_bird"
       ? {
@@ -350,6 +350,19 @@ export default function RegistrationForm({
       </div>
 
       <div>
+        {/* Size chart ditampilkan sekali di atas Participant 1 */}
+        {packageType !== "only_medal" && (
+          <div className="bg-white p-6 shadow-lg border-b-2 border-gray-100">
+            <h2 className="text-2xl font-impact text-background mb-4">Size Chart</h2>
+            <Image
+              src="/registration/size-chart-new.webp"
+              className="w-full h-auto rounded-lg"
+              alt="Size Chart"
+              width={800}
+              height={500}
+            />
+          </div>
+        )}
         {participants.map((p, i) => (
           <ParticipantForm
             key={i}

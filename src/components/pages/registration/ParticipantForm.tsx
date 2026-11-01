@@ -263,15 +263,6 @@ export default function ParticipantForm({
             <h3 className="text-lg font-bold text-background mb-4 pb-2 border-b-2 border-gray-100">
               {isOnlyMedal ? "Medical Condition" : "Jersey & Medical Condition"}
             </h3>
-            {!isOnlyMedal && (
-              <Image
-                src="/registration/size-chart-new.webp"
-                className="w-full h-auto"
-                alt="Size Chart"
-                width={500}
-                height={300}
-              />
-            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {!isOnlyMedal && (
                 <div>
