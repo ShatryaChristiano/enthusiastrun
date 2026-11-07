@@ -61,6 +61,22 @@ export const authOptions: NextAuthOptions = {
           select: { role: true },
         });
         token.role = dbUser?.role;
+
+        // ADMIN_EMAILS (opsional, dipisah koma): email yang otomatis dijadikan
+        // admin saat login. Dipakai di project preview agar tidak perlu
+        // mengubah role langsung di database.
+        const email = ((token as any).email as string | undefined)?.toLowerCase();
+        const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+          .split(",")
+          .map((e) => e.trim().toLowerCase())
+          .filter(Boolean);
+        if (dbUser && email && adminEmails.includes(email) && dbUser.role !== Role.admin) {
+          await prisma.user.update({
+            where: { id: token.id as string },
+            data: { role: Role.admin },
+          });
+          token.role = Role.admin;
+        }
       }
 
       return token;

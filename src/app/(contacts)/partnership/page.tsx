@@ -37,7 +37,7 @@ export default function page() {
           height={500}
           className="absolute bottom-0 md:bottom-0 xl:-bottom-32 w-screen h-auto"
         />
-        <div className="w-[80%] rounded-lg sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col py-[10%] items-center gap-8 font-impact">
+        <div className="w-[80%] rounded-lg sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col py-[10%] items-center gap-8 font-heading">
           <Image
             src="/home/enthusiast-text-logo.webp"
             draggable={false}
@@ -56,7 +56,7 @@ export default function page() {
               <div className="mt-[2.5%] flex flex-col gap-2 items-center sm:items-start text-center sm:text-start">
                 <h1 className="text-4xl w-[90%] sm:w-full">SPONSORSHIP</h1>
               </div>
-              <div className="text-xl font-futura font-bold text-justify max-h-[250px] overflow-y-auto list-inside">
+              <div className="text-xl font-body font-bold text-justify max-h-[250px] overflow-y-auto list-inside">
                 <Link
                   href={"https://wa.me/+6281252795787"}
                   target="_blank"
@@ -79,7 +79,7 @@ export default function page() {
               <div className="mt-[2.5%] flex flex-col gap-2 items-center sm:items-start text-center sm:text-start">
                 <h1 className="text-4xl w-[90%] sm:w-full">MEDIA PARTNER</h1>
               </div>
-              <div className="text-xl font-futura font-bold text-justify max-h-[250px] overflow-y-auto list-inside">
+              <div className="text-xl font-body font-bold text-justify max-h-[250px] overflow-y-auto list-inside">
                 <Link
                   href={"https://wa.me/+6281259990845"}
                   target="_blank"

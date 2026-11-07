@@ -38,7 +38,7 @@ export default function TMPage() {
           className="absolute bottom-0 md:bottom-0 xl:-bottom-32 w-screen h-auto"
         />
 
-        <div className="w-[90%] sm:w-[80%] rounded-lg py-16 sm:p-12 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col mt-[5.5%] mb-[4%] items-center gap-8 font-impact">
+        <div className="w-[90%] sm:w-[80%] rounded-lg py-16 sm:p-12 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col mt-[5.5%] mb-[4%] items-center gap-8 font-heading">
           {/* Logo */}
           <Image
             src="/home/enthusiast-text-logo.webp"
@@ -53,8 +53,10 @@ export default function TMPage() {
             <h1 className="text-4xl sm:text-5xl text-white">
               TECHNICAL MEETING
             </h1>
-            <p className="text-base font-futura text-white/70 mt-1">
-              Informasi lengkap seputar Technical Meeting Enthusiast Foam Run
+            <p className="text-base font-body text-white/70 mt-1">
+              Still have questions or need more information about Enthusiast Foam Run? 
+              We provide an optional Technical Meeting session to help you better understand the event details and running procedures before the big day. 
+              Feel free to join us if you need further clarification!
             </p>
           </div>
 
@@ -63,11 +65,22 @@ export default function TMPage() {
             {/* Date */}
             <div className="flex items-center gap-4 bg-white/10 border-2 border-white rounded-xl px-6 py-5 w-full">
               <div className="flex flex-col items-start">
-                <span className="text-xs font-futura text-white/60 uppercase tracking-widest">
+                <span className="text-xs font-body text-white/60 uppercase tracking-widest">
                   Date
                 </span>
-                <span className="text-xl font-futura font-bold text-white">
+                <span className="text-xl font-body font-bold text-white">
                   7 Mei 2027
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 bg-white/10 border-2 border-white rounded-xl px-6 py-5 w-full">
+              <div className="flex flex-col items-start">
+                <span className="text-xs font-body text-white/60 uppercase tracking-widest">
+                  Time
+                </span>
+                <span className="text-xl font-body font-bold text-white">
+                  19:00 WIB
                 </span>
               </div>
             </div>
@@ -75,10 +88,10 @@ export default function TMPage() {
             {/* Format */}
             <div className="flex items-center gap-4 bg-white/10 border-2 border-white rounded-xl px-6 py-5 w-full">
               <div className="flex flex-col items-start">
-                <span className="text-xs font-futura text-white/60 uppercase tracking-widest">
+                <span className="text-xs font-body text-white/60 uppercase tracking-widest">
                   Format
                 </span>
-                <span className="text-xl font-futura font-bold text-white">
+                <span className="text-xl font-body font-bold text-white">
                   Online Zoom Meeting
                 </span>
               </div>
@@ -92,10 +105,10 @@ export default function TMPage() {
               className="flex items-center gap-4 bg-[#25D366] hover:bg-[#1ebe5d] active:bg-[#17a355] transition-colors duration-200 border-2 border-white rounded-xl px-6 py-5 w-full cursor-pointer"
             >
               <div className="flex flex-col items-start">
-                <span className="text-xs font-futura text-white/80 uppercase tracking-widest">
+                <span className="text-xs font-body text-white/80 uppercase tracking-widest">
                   WhatsApp Group
                 </span>
-                <span className="text-xl font-futura font-bold text-white">
+                <span className="text-xl font-body font-bold text-white">
                   JOIN GRUP WA TM
                 </span>
               </div>

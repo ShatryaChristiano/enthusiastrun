@@ -69,7 +69,7 @@ export default function VoucherManager({
 
     setDeletingId(id);
     try {
-      const response = await fetch(`/api/voucher/${id}`, {
+      const response = await fetch(`/api/vouchers/${id}`, {
         method: "DELETE",
       });
 
@@ -142,7 +142,7 @@ export default function VoucherManager({
             <button
               onClick={handleCreateVoucher}
               disabled={isCreating}
-              className={`px-6 py-3 rounded-lg font-impact text-white transition-all ${
+              className={`px-6 py-3 rounded-lg font-heading text-white transition-all ${
                 isCreating
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-[#4BCFFC] hover:bg-[#3AA9D1]"
@@ -182,19 +182,19 @@ export default function VoucherManager({
       {/* Stats Section */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
         <div className="bg-white/20 border border-white/40 rounded-lg p-4 text-center">
-          <p className="text-3xl font-impact text-white">{stats.total}</p>
+          <p className="text-3xl font-heading text-white">{stats.total}</p>
           <p className="text-white/70 text-sm">Total</p>
         </div>
         <div className="bg-green-500/20 border border-green-500 rounded-lg p-4 text-center">
-          <p className="text-3xl font-impact text-green-300">{stats.unused}</p>
+          <p className="text-3xl font-heading text-green-300">{stats.unused}</p>
           <p className="text-green-300/70 text-sm">Available</p>
         </div>
         <div className="bg-red-500/20 border border-red-500 rounded-lg p-4 text-center">
-          <p className="text-3xl font-impact text-red-300">{stats.used}</p>
+          <p className="text-3xl font-heading text-red-300">{stats.used}</p>
           <p className="text-red-300/70 text-sm">Unavailable</p>
         </div>
         <div className="bg-blue-500/20 border border-blue-500 rounded-lg p-4 text-center">
-          <p className="text-3xl font-impact text-blue-300">
+          <p className="text-3xl font-heading text-blue-300">
             {stats.category5k}
           </p>
           <p className="text-blue-300/70 text-sm">5K Run</p>

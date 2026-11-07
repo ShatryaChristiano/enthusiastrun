@@ -39,7 +39,7 @@ export default function page() {
         />
         
         {/* Content Container */}
-        <div className="w-[90%] md:w-[80%] rounded-lg py-16 sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col mt-[5.5%] items-center gap-6 font-impact text-black bg-white/90">
+        <div className="w-[90%] md:w-[80%] rounded-lg py-16 sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col mt-[5.5%] items-center gap-6 font-heading text-black bg-white/90">
           <Image
             src="/home/enthusiast-text-logo.webp"
             draggable={false}
@@ -53,11 +53,11 @@ export default function page() {
             <h1 className="text-3xl md:text-4xl text-black uppercase tracking-wide">
               PRIVACY POLICY
             </h1>
-            <p className="font-futura text-sm text-gray-600">Last Updated: January 2026</p>
+            <p className="font-body text-sm text-gray-600">Last Updated: January 2026</p>
           </div>
           
           {/* Scrollable Privacy Content */}
-          <div className="w-full px-4 md:px-8 font-futura text-gray-800 h-[400px] overflow-y-auto pr-2 text-sm md:text-base leading-relaxed text-left border-t border-b border-gray-300 py-4">
+          <div className="w-full px-4 md:px-8 font-body text-gray-800 h-[400px] overflow-y-auto pr-2 text-sm md:text-base leading-relaxed text-left border-t border-b border-gray-300 py-4">
             
             <p className="mb-4">
               At <strong>enthusiastrun.com</strong> ("Enthusiast Foam Run"), we value your privacy. This Privacy Policy explains how we collect, use, and protect your information when you visit our website or register for our events using Google Authentication.
@@ -113,7 +113,7 @@ export default function page() {
             </p>
           </div>
           
-          <div className="text-xs text-gray-500 font-futura">
+          <div className="text-xs text-gray-500 font-body">
              © {new Date().getFullYear()} Enthusiast Foam Run. All rights reserved.
           </div>
         </div>

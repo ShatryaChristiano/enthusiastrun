@@ -40,7 +40,7 @@ export default function Navbar() {
         <Link
           href="/"
           rel="home"
-          className="text-white font-impact text-2xl flex items-center justify-center gap-1 hover:cursor-pointer"
+          className="text-white font-heading text-2xl flex items-center justify-center gap-1 hover:cursor-pointer"
         >
           <Image
             src="/home/enthusiast-text-logo.webp"
@@ -69,11 +69,11 @@ export default function Navbar() {
           className="bg-background border-l-4 border-white w-[80%] sm:w-[350px]"
         >
           <SheetHeader>
-            <SheetTitle className="text-white font-impact text-2xl">
+            <SheetTitle className="text-white font-heading text-2xl">
               ENTHUSIAST
             </SheetTitle>
           </SheetHeader>
-          <div className="mt-12 flex flex-col ml-4 gap-6 font-impact text-xl">
+          <div className="mt-12 flex flex-col ml-4 gap-6 font-heading text-xl">
             {/* About Section */}
             {/* Auth Section */}
             <div className="">
@@ -85,7 +85,7 @@ export default function Navbar() {
                   <Link
                     rel="dashboard"
                     href="/dashboard"
-                    className="text-white font-futura hover:text-[#4BCFFC]"
+                    className="text-white font-body hover:text-[#4BCFFC]"
                     onClick={closeSheet}
                   >
                     DASHBOARD
@@ -111,7 +111,7 @@ export default function Navbar() {
               <Link
                 href="/about"
                 rel="about"
-                className="text-white font-futura hover:text-[#4BCFFC]"
+                className="text-white font-body hover:text-[#4BCFFC]"
                 onClick={closeSheet}
               >
                 ENTHUSIAST RUN
@@ -119,7 +119,7 @@ export default function Navbar() {
               <Link
                 href="/about/jersey-medal"
                 rel="jersey and medal"
-                className="text-white font-futura hover:text-[#4BCFFC]"
+                className="text-white font-body hover:text-[#4BCFFC]"
                 onClick={closeSheet}
               >
                 JERSEY & MEDAL
@@ -127,7 +127,7 @@ export default function Navbar() {
               <Link
                 href="/about/race-venue"
                 rel="racepack collection venue"
-                className="text-white font-futura hover:text-[#4BCFFC]"
+                className="text-white font-body hover:text-[#4BCFFC]"
                 onClick={closeSheet}
               >
                 RACE PACK COLLECTION VENUE
@@ -135,7 +135,7 @@ export default function Navbar() {
               <Link
                 href="/about/tm"
                 rel="technical meeting"
-                className="text-white font-futura hover:text-[#4BCFFC]"
+                className="text-white font-body hover:text-[#4BCFFC]"
                 onClick={closeSheet}
               >
                 TECHNICAL MEETING
@@ -148,7 +148,7 @@ export default function Navbar() {
               <Link
                 href="/register/CATEGORY_5K"
                 rel="registration 5k"
-                className="text-white font-futura hover:text-[#4BCFFC]"
+                className="text-white font-body hover:text-[#4BCFFC]"
                 onClick={closeSheet}
               >
                 5K RUN
@@ -160,7 +160,7 @@ export default function Navbar() {
               <Link
                 href="/partnership"
                 rel="partnership"
-                className="text-white font-futura hover:text-[#4BCFFC]"
+                className="text-white font-body hover:text-[#4BCFFC]"
                 onClick={closeSheet}
               >
                 PARTNERSHIP
@@ -168,7 +168,7 @@ export default function Navbar() {
               <Link
                 href="/route"
                 rel="route"
-                className="text-white font-futura hover:text-[#4BCFFC]"
+                className="text-white font-body hover:text-[#4BCFFC]"
                 onClick={closeSheet}
               >
                 ROUTE
@@ -176,19 +176,19 @@ export default function Navbar() {
               <Link
                 href="/contact"
                 rel="contact"
-                className="text-white font-futura hover:text-[#4BCFFC]"
+                className="text-white font-body hover:text-[#4BCFFC]"
                 onClick={closeSheet}
               >
                 CONTACT
               </Link>
-              <Link href={"/privacy-policy"} className="text-xl hover:underline font-impact">Privacy Policy</Link>
+              <Link href={"/privacy-policy"} className="text-xl hover:underline font-heading">Privacy Policy</Link>
             </div>
           </div>
         </SheetContent>
       </Sheet>
 
       {/* Desktop Menu */}
-      <div className="hidden md:flex font-impact text-xl gap-4 justify-center items-center font-regular">
+      <div className="hidden md:flex font-heading text-xl gap-4 justify-center items-center font-regular">
         <TextDropdownPanel
           label="ABOUT"
           items={[
@@ -219,7 +219,7 @@ export default function Navbar() {
         <Link href="/contact" rel="contact" className="text-white hover:underline">
           CONTACT
         </Link>
-        {/* <Link href={"/privacy-policy"} className="text-xl hover:underline font-impact text-white">Privacy Policy</Link> */}
+        {/* <Link href={"/privacy-policy"} className="text-xl hover:underline font-heading text-white">Privacy Policy</Link> */}
         <div className="flex items-center">
           {status === "loading" ? (
             <div className="w-10 h-10 rounded-full bg-zinc-200 animate-pulse" />

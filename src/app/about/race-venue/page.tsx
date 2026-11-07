@@ -35,7 +35,7 @@ export default function page() {
           height={500}
           className="absolute bottom-0 md:bottom-0 xl:-bottom-32 w-screen h-auto"
         />
-        <div className="w-[80%] sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col mt-[7.5%] md:mt-0 py-[10%] items-center gap-8 font-impact">
+        <div className="w-[80%] sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col mt-[7.5%] md:mt-0 py-[10%] items-center gap-8 font-heading">
           <Image
             src="/home/enthusiast-text-logo.webp"
             draggable={false}
@@ -51,7 +51,7 @@ export default function page() {
                   REQUIREMENTS
                 </h1>
               </div>
-              <ol className="text-xl w-[80%] font-futura text-left sm:text-justify max-h-[250px] overflow-y-auto list-decimal list-inside">
+              <ol className="text-xl w-[80%] font-body text-left sm:text-justify max-h-[250px] overflow-y-auto list-decimal list-inside">
                 <li>
                   Show your original identity card (KTP/ Student Card/ SIM, etc.)
                 </li>
@@ -65,7 +65,7 @@ export default function page() {
                 </h1>
                 <h3 className="text-2xl w-[90%] sm:w-full">(IF REPRESENTED)</h3>
               </div>
-              <ol className="text-xl w-[80%] font-futura text-left sm:text-justify max-h-[250px] overflow-y-auto list-decimal list-inside">
+              <ol className="text-xl w-[80%] font-body text-left sm:text-justify max-h-[250px] overflow-y-auto list-decimal list-inside">
                 <li>Photocopy of the represented person's ID card</li>
                 <li>Photocopy of the collector's ID card</li>
                 <li>Collector's name</li>
@@ -79,7 +79,7 @@ export default function page() {
                   RACEPACK COLLECTION VENUE
                 </h1>
               </div>
-              <div className="text-xl w-[80%] font-futura text-left space-y-2">
+              <div className="text-xl w-[80%] font-body text-left space-y-2">
                 <p>
                   <span className="font-bold">Place</span> : Universitas Ciputra
                   Surabaya

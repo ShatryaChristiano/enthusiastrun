@@ -1,7 +1,10 @@
 "use server";
 
-import prisma from "@/lib/prisma";
+import { randomBytes, randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { getServerSession } from "next-auth/next";
+import prisma from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
 import { ActionResult } from "@/types/action.md";
 import {
   RegistrationData,
@@ -9,19 +12,256 @@ import {
   RegistrationStatus,
   Voucher,
 } from "@/types/registration.md";
-import { sendRacepackEmail } from "@/lib/email";
+import { RacepackEmailParams, sendRacepackEmails } from "@/lib/email";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SISTEM QR INDIVIDUAL
+//
+// 1 akun bisa mendaftarkan beberapa peserta dalam satu transaksi (groupId sama,
+// satu bukti bayar). Saat admin mengonfirmasi pembayaran, SETIAP peserta
+// mendapat QR miliknya sendiri yang dikirim ke email peserta tersebut.
+// Racepack hanya bisa diklaim dengan QR peserta itu sendiri (sekali pakai).
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTH HELPERS
+// File ini "use server": setiap fungsi yang di-export bisa dipanggil langsung
+// dari browser, jadi aksi admin WAJIB mengecek role di sini.
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function getSessionUser() {
+  const session = await getServerSession(authOptions);
+  return session?.user ?? null;
+}
+
+async function requireUser() {
+  const user = await getSessionUser();
+  if (!user?.id) throw new Error("Silakan login terlebih dahulu.");
+  return user;
+}
+
+async function requireAdmin() {
+  const user = await getSessionUser();
+  if (!user?.id || user.role !== "admin") {
+    throw new Error("Unauthorized: hanya admin yang dapat melakukan aksi ini.");
+  }
+  return user;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Buat URL QR Code menggunakan token unik peserta */
+const errorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : undefined;
+
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+
+/** Buat URL gambar QR Code untuk token unik peserta */
 function buildQRCodeUrl(token: string): string {
   return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(token)}`;
 }
 
+/** Token acak 32 karakter hex — tidak bisa ditebak */
+function generateQRToken(): string {
+  return randomBytes(16).toString("hex");
+}
+
+const LEGACY_GROUP_WINDOW_MS = 60_000;
+
+/**
+ * Ambil semua id registrasi dalam satu transaksi pendaftaran.
+ * Data baru memakai groupId; data lama (groupId null) memakai fallback
+ * userId + createdAt ±60 detik seperti sistem sebelumnya.
+ */
+async function findGroupRegistrationIds(registrationId: string): Promise<string[]> {
+  const target = await prisma.registration.findUnique({
+    where: { id: registrationId },
+    select: { id: true, userId: true, createdAt: true, groupId: true },
+  });
+  if (!target) return [];
+
+  if (target.groupId) {
+    const members = await prisma.registration.findMany({
+      where: { groupId: target.groupId },
+      select: { id: true },
+    });
+    return members.map((m) => m.id);
+  }
+
+  const members = await prisma.registration.findMany({
+    where: {
+      userId: target.userId,
+      groupId: null,
+      createdAt: {
+        gte: new Date(target.createdAt.getTime() - LEGACY_GROUP_WINDOW_MS),
+        lte: new Date(target.createdAt.getTime() + LEGACY_GROUP_WINDOW_MS),
+      },
+    },
+    select: { id: true },
+  });
+  return members.map((m) => m.id);
+}
+
+/**
+ * Pastikan setiap peserta (yang sudah confirmed) punya QR sendiri.
+ * Idempotent: peserta yang sudah punya QR dilewati.
+ */
+async function ensureIndividualQRCodes(registrationIds: string[]): Promise<void> {
+  const missing = await prisma.registration.findMany({
+    where: { id: { in: registrationIds }, qrCodeId: null, status: "confirmed" },
+    select: { id: true },
+  });
+
+  for (const { id } of missing) {
+    const token = generateQRToken();
+    await prisma.$transaction(async (tx) => {
+      const qr = await tx.qRCode.create({
+        data: { token, qrCodeUrl: buildQRCodeUrl(token) },
+      });
+      await tx.registration.update({
+        where: { id },
+        data: { qrCodeId: qr.id, emailStatus: "NOT_SENT" },
+      });
+    });
+  }
+}
+
+/**
+ * Kirim email QR ke masing-masing peserta (ke email peserta itu sendiri).
+ * - force=false: peserta yang emailnya sudah SENT dilewati (idempotent)
+ * - force=true : kirim ulang walau sudah pernah terkirim
+ */
+async function sendQREmailsToParticipants(
+  registrationIds: string[],
+  { force = false }: { force?: boolean } = {},
+): Promise<{ sent: number; failed: number; skipped: number }> {
+  const regs = await prisma.registration.findMany({
+    where: {
+      id: { in: registrationIds },
+      status: "confirmed",
+      qrCodeId: { not: null },
+      ...(force ? {} : { emailStatus: { not: "SENT" } }),
+    },
+    include: { qrCode: true, user: { select: { name: true } } },
+  });
+
+  const sendable = regs.filter((r) => r.qrCode);
+  if (sendable.length === 0) {
+    return { sent: 0, failed: 0, skipped: registrationIds.length };
+  }
+
+  const params: RacepackEmailParams[] = sendable.map((r) => ({
+    to: r.email,
+    fullName: r.fullName,
+    qrCodeUrl: r.qrCode!.qrCodeUrl,
+    qrToken: r.qrCode!.token,
+    category: r.category,
+    jerseySize: r.jerseySize,
+    chosenPackage: r.chosenPackage ?? undefined,
+    registeredBy: r.user?.name ?? undefined,
+  }));
+
+  const results = await sendRacepackEmails(params);
+
+  const sentIds = sendable.filter((_, i) => results[i]?.success).map((r) => r.id);
+  const failedIds = sendable.filter((_, i) => !results[i]?.success).map((r) => r.id);
+
+  if (sentIds.length) {
+    await prisma.registration.updateMany({
+      where: { id: { in: sentIds } },
+      data: { emailStatus: "SENT", emailSentAt: new Date() },
+    });
+  }
+  if (failedIds.length) {
+    await prisma.registration.updateMany({
+      where: { id: { in: failedIds } },
+      data: { emailStatus: "FAILED" },
+    });
+  }
+
+  return {
+    sent: sentIds.length,
+    failed: failedIds.length,
+    skipped: registrationIds.length - sendable.length,
+  };
+}
+
+/**
+ * Validasi email peserta: setiap peserta wajib memakai email berbeda dan
+ * belum terdaftar, karena QR racepack dikirim ke email masing-masing.
+ */
+async function validateParticipantEmails(
+  emails: string[],
+  category: string,
+): Promise<string | null> {
+  const normalized = emails.map(normalizeEmail);
+
+  const seen = new Map<string, number>();
+  for (let i = 0; i < normalized.length; i++) {
+    const prev = seen.get(normalized[i]);
+    if (prev !== undefined) {
+      return `Participant ${prev + 1} dan Participant ${i + 1} memakai email yang sama (${normalized[i]}). Setiap peserta wajib memakai email masing-masing karena QR racepack dikirim ke email tersebut.`;
+    }
+    seen.set(normalized[i], i);
+  }
+
+  const existing = await prisma.registration.findMany({
+    where: {
+      category: category as Registration["category"],
+      status: { not: "cancelled" },
+      OR: normalized.map((email) => ({
+        email: { equals: email, mode: "insensitive" as const },
+      })),
+    },
+    select: { email: true },
+  });
+
+  if (existing.length > 0) {
+    const list = [...new Set(existing.map((e) => e.email.toLowerCase()))].join(", ");
+    return `Email berikut sudah terdaftar: ${list}. Gunakan email lain untuk peserta tersebut.`;
+  }
+
+  return null;
+}
+
+function buildRegistrationCreateData(
+  data: RegistrationData & { voucherId?: string },
+  userId: string,
+  overrides: { status: RegistrationStatus; groupId: string },
+) {
+  return {
+    userId,
+    groupId: overrides.groupId,
+    fullName: data.fullName.trim(),
+    email: normalizeEmail(data.email),
+    phoneNumber: data.phoneNumber,
+    dateOfBirth: data.dateOfBirth,
+    gender: data.gender,
+    address: data.address,
+    city: data.city,
+    emergencyContact: data.emergencyContact,
+    emergencyPhone: data.emergencyPhone,
+    category: data.category,
+    bloodType: data.bloodType,
+    medicalCondition: data.medicalCondition,
+    photoUrl: data.photoUrl,
+    photoPublicId: data.photoPublicId,
+    idCardUrl: data.idCardUrl,
+    idCardPublicId: data.idCardPublicId,
+    jerseySize: data.jerseySize,
+    paymentProofUrl: data.paymentProofUrl,
+    paymentProofId: data.paymentProofId,
+    status: overrides.status,
+    type: data.type,
+    rekeningName: data.rekeningName || "-",
+    chosenPackage: data.chosenPackage || "personal",
+    committeeInviter: data.committeeInviter || null,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// REGISTRATION COUNTS
+// REGISTRATION COUNTS (publik)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function checkRegistrationCount(
@@ -29,233 +269,120 @@ export async function checkRegistrationCount(
   type: "super_early_bird" | "early_bird" | "regular" | "redeem_voucher",
 ): Promise<number> {
   try {
-    const count = await prisma.registration.count({
-      where: { category, type },
-    });
-    return count;
+    return await prisma.registration.count({ where: { category, type } });
   } catch {
     return 100;
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CREATE REGISTRATION
+// CREATE REGISTRATION — Redeem voucher (1 peserta, langsung confirmed)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function createRegistration(
   data: RegistrationData & { voucherId?: string },
 ): Promise<ActionResult<Registration>> {
   try {
-    const user = await prisma.user.findUnique({ where: { id: data.userId } });
-    if (!user) return { success: false, error: "User not found." };
+    const user = await requireUser();
 
-    const existingRegistration = await prisma.registration.findFirst({
-      where: {
-        email: data.email,
-        category: data.category,
-        status: { not: "cancelled" },
-      },
-    });
-
-    if (existingRegistration) {
-      return { success: false, error: "Email already registered." };
+    // Jalur ini hanya untuk redeem voucher; pendaftaran berbayar lewat
+    // createBulkRegistration (status pending sampai admin konfirmasi).
+    if (data.type !== "redeem_voucher" || !data.voucherId) {
+      return { success: false, error: "Kode voucher diperlukan." };
     }
 
-    const registration = await prisma.$transaction(async (tx) => {
-      const reg = await tx.registration.create({
-        data: {
-          userId: data.userId,
-          fullName: data.fullName,
-          email: data.email,
-          phoneNumber: data.phoneNumber,
-          dateOfBirth: data.dateOfBirth,
-          gender: data.gender,
-          address: data.address,
-          city: data.city,
-          emergencyContact: data.emergencyContact,
-          emergencyPhone: data.emergencyPhone,
-          category: data.category,
-          bloodType: data.bloodType,
-          medicalCondition: data.medicalCondition,
-          photoUrl: data.photoUrl,
-          photoPublicId: data.photoPublicId,
-          idCardUrl: data.idCardUrl,
-          idCardPublicId: data.idCardPublicId,
-          jerseySize: data.jerseySize,
-          paymentProofUrl: data.paymentProofUrl,
-          paymentProofId: data.paymentProofId,
-          status: (data.type === "redeem_voucher"
-            ? "confirmed"
-            : "pending") as RegistrationStatus,
-          type: data.type,
-          updatedAt: new Date(),
-          voucherId: data.voucherId || null,
-          rekeningName: data.rekeningName || "-",
-          chosenPackage: data.chosenPackage || "personal",
-          committeeInviter: data.committeeInviter || null,
-        },
-      });
+    const emailError = await validateParticipantEmails([data.email], data.category);
+    if (emailError) return { success: false, error: emailError };
 
-      if (data.voucherId) {
-        await tx.voucher.update({
-          where: { id: data.voucherId },
-          data: { isUsed: true },
-        });
+    const registration = await prisma.$transaction(async (tx) => {
+      // Klaim voucher secara atomic: gagal jika sudah dipakai / tidak ada
+      const claimed = await tx.voucher.updateMany({
+        where: { id: data.voucherId, isUsed: false, category: data.category },
+        data: { isUsed: true },
+      });
+      if (claimed.count === 0) {
+        throw new Error("Kode voucher tidak valid atau sudah digunakan.");
       }
 
-      return reg;
+      return tx.registration.create({
+        data: {
+          ...buildRegistrationCreateData(data, user.id, {
+            status: "confirmed",
+            groupId: randomUUID(),
+          }),
+          voucherId: data.voucherId,
+        },
+      });
     });
+
+    // Voucher = langsung confirmed → buat QR + kirim email sekarang
+    try {
+      await ensureIndividualQRCodes([registration.id]);
+      await sendQREmailsToParticipants([registration.id]);
+    } catch (err) {
+      console.error("[QR/Email] Error after voucher registration:", err);
+    }
 
     revalidatePath("/register");
     revalidatePath("/dashboard");
 
-    return { success: true, data: registration as Registration };
-  } catch {
-    return { success: false, error: "Failed to register." };
+    return { success: true, data: registration as unknown as Registration };
+  } catch (error) {
+    return { success: false, error: errorMessage(error) || "Failed to register." };
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BULK REGISTRATION (tidak lagi membuat QR — QR dibuat saat konfirmasi)
+// BULK REGISTRATION — 1 akun mendaftarkan 1..N peserta (status pending)
+// QR dibuat per peserta setelah admin mengonfirmasi pembayaran.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function createBulkRegistration(
   dataList: (RegistrationData & { voucherId?: string })[],
 ): Promise<ActionResult<Registration[]>> {
   try {
+    const user = await requireUser();
+
+    if (!dataList.length) {
+      return { success: false, error: "Minimal satu peserta diperlukan." };
+    }
+
+    const emailError = await validateParticipantEmails(
+      dataList.map((d) => d.email),
+      dataList[0].category,
+    );
+    if (emailError) return { success: false, error: emailError };
+
+    const groupId = randomUUID();
+
     const registrations = await prisma.$transaction(async (tx) => {
       const results = [];
       for (const data of dataList) {
-        const reg = await tx.registration.create({
-          data: {
-            userId: data.userId,
-            fullName: data.fullName,
-            email: data.email,
-            phoneNumber: data.phoneNumber,
-            dateOfBirth: data.dateOfBirth,
-            gender: data.gender,
-            address: data.address,
-            city: data.city,
-            emergencyContact: data.emergencyContact,
-            emergencyPhone: data.emergencyPhone,
-            category: data.category,
-            bloodType: data.bloodType,
-            medicalCondition: data.medicalCondition,
-            photoUrl: data.photoUrl,
-            photoPublicId: data.photoPublicId,
-            idCardUrl: data.idCardUrl,
-            idCardPublicId: data.idCardPublicId,
-            jerseySize: data.jerseySize,
-            paymentProofUrl: data.paymentProofUrl,
-            paymentProofId: data.paymentProofId,
-            status: "pending",
-            type: data.type,
-            // qrCodeId: null — QR dibuat setelah pembayaran dikonfirmasi
-            rekeningName: data.rekeningName || "-",
-            chosenPackage: data.chosenPackage || "personal",
-            committeeInviter: data.committeeInviter || null,
-          },
-        });
-        results.push(reg);
+        results.push(
+          await tx.registration.create({
+            // userId diambil dari session, bukan dari input client
+            data: buildRegistrationCreateData(data, user.id, {
+              status: "pending",
+              groupId,
+            }),
+          }),
+        );
       }
       return results;
     });
 
+    revalidatePath("/dashboard");
     revalidatePath("/dashboard/admin");
-    return { success: true, data: registrations as Registration[] };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+    return { success: true, data: registrations as unknown as Registration[] };
+  } catch (error) {
+    return { success: false, error: errorMessage(error) || "Failed to register." };
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GENERATE INDIVIDUAL QR CODES
-// Dipanggil saat status di-set ke "confirmed"
-// Idempotent: tidak membuat QR baru jika sudah ada
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function generateIndividualQRCodes(
-  registrationIds: string[],
-): Promise<void> {
-  for (const regId of registrationIds) {
-    // Cek apakah sudah punya QR (idempotency)
-    const existing = await prisma.registration.findUnique({
-      where: { id: regId },
-      select: { qrCodeId: true },
-    });
-
-    if (existing?.qrCodeId) {
-      // QR sudah ada, skip
-      continue;
-    }
-
-    // Buat QR baru dengan token unik
-    const newQR = await prisma.qRCode.create({
-      data: { qrCodeUrl: "", token: "" },
-    });
-
-    // Token = id QRCode (sudah CUID, unik dan tidak mudah ditebak)
-    const token = newQR.id;
-    const qrCodeUrl = buildQRCodeUrl(token);
-
-    await prisma.qRCode.update({
-      where: { id: newQR.id },
-      data: { token, qrCodeUrl },
-    });
-
-    // Link ke registration
-    await prisma.registration.update({
-      where: { id: regId },
-      data: { qrCodeId: newQR.id },
-    });
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SEND INDIVIDUAL RACEPACK EMAILS
-// Idempotent: tidak mengirim ulang jika emailStatus === 'SENT'
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function sendRacepackEmailsForRegistrations(
-  registrationIds: string[],
-): Promise<void> {
-  for (const regId of registrationIds) {
-    const reg = await prisma.registration.findUnique({
-      where: { id: regId },
-      include: { qrCode: true },
-    });
-
-    if (!reg) continue;
-
-    // Sudah terkirim sukses → skip (idempotency)
-    if (reg.emailStatus === "SENT") continue;
-
-    // Belum punya QR → skip (tidak boleh kirim email tanpa QR)
-    if (!reg.qrCode) continue;
-
-    const emailResult = await sendRacepackEmail({
-      to: reg.email,
-      fullName: reg.fullName,
-      qrCodeUrl: reg.qrCode.qrCodeUrl,
-      qrToken: reg.qrCode.token,
-      category: reg.category,
-      jerseySize: reg.jerseySize,
-      chosenPackage: reg.chosenPackage ?? undefined,
-    });
-
-    await prisma.registration.update({
-      where: { id: regId },
-      data: {
-        emailStatus: emailResult.success ? "SENT" : "FAILED",
-        emailSentAt: emailResult.success ? new Date() : undefined,
-      },
-    });
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// UPDATE REGISTRATION STATUS
-// Saat status → "confirmed": buat QR individual + kirim email
+// UPDATE REGISTRATION STATUS (Admin)
+// Satu bukti bayar = satu grup, jadi status diterapkan ke seluruh grup.
+// Saat confirmed: setiap peserta dibuatkan QR sendiri + dikirim ke emailnya.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function updateRegistrationStatus(
@@ -263,255 +390,314 @@ export async function updateRegistrationStatus(
   status: "pending" | "confirmed" | "cancelled",
 ) {
   try {
-    const target = await prisma.registration.findUnique({
-      where: { id },
-      select: { userId: true, createdAt: true },
-    });
+    await requireAdmin();
 
-    if (!target) return { success: false, error: "Registration not found" };
-
-    const timeWinStart = new Date(target.createdAt.getTime() - 60000);
-    const timeWinEnd = new Date(target.createdAt.getTime() + 60000);
-
-    const groupMembers = await prisma.registration.findMany({
-      where: {
-        userId: target.userId,
-        createdAt: { gte: timeWinStart, lte: timeWinEnd },
-      },
-      select: { id: true },
-    });
-
-    const updatedIds = groupMembers.map((r) => r.id);
+    const updatedIds = await findGroupRegistrationIds(id);
+    if (updatedIds.length === 0) {
+      return { success: false, error: "Registration not found" };
+    }
 
     await prisma.registration.updateMany({
       where: { id: { in: updatedIds } },
       data: {
         status,
         paymentStatus:
-          status === "confirmed"
-            ? true
-            : status === "cancelled"
-              ? false
-              : undefined,
+          status === "confirmed" ? true : status === "cancelled" ? false : undefined,
+        paymentDate: status === "confirmed" ? new Date() : undefined,
       },
     });
 
-    // Jika dikonfirmasi: buat QR individual + kirim email (non-blocking error)
+    let message = `Status ${updatedIds.length} peserta diperbarui.`;
+
     if (status === "confirmed") {
       try {
-        await generateIndividualQRCodes(updatedIds);
-        await sendRacepackEmailsForRegistrations(updatedIds);
-      } catch (emailErr) {
-        console.error("[QR/Email] Error after confirmation:", emailErr);
-        // Tidak menggagalkan konfirmasi hanya karena error email/QR
+        await ensureIndividualQRCodes(updatedIds);
+        const result = await sendQREmailsToParticipants(updatedIds);
+        message += ` QR terkirim ke ${result.sent} email peserta.`;
+        if (result.failed > 0) {
+          message += ` ${result.failed} email gagal — kirim ulang dari detail pendaftaran.`;
+        }
+      } catch (err) {
+        console.error("[QR/Email] Error after confirmation:", err);
+        message += " Namun terjadi error saat membuat/mengirim QR — cek detail pendaftaran.";
       }
     }
 
+    revalidatePath("/dashboard");
     revalidatePath("/dashboard/admin");
-    return {
-      success: true,
-      updatedIds,
-      message: `Successfully updated the entire registration group.`,
-    };
-  } catch {
-    return { success: false, error: "Failed to perform update" };
+    return { success: true, updatedIds, message };
+  } catch (error) {
+    return { success: false, error: errorMessage(error) || "Failed to perform update" };
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VALIDATE QR (Individual — satu QR = satu peserta)
+// VALIDATE QR (Admin — satu QR = satu peserta)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function validateRegistrationQR(
   rawQRValue: string,
 ): Promise<ActionResult<Registration>> {
   try {
-    // rawQRValue bisa berupa token langsung (CUID dari QRCode.id)
-    const qrCode = await prisma.qRCode.findFirst({
-      where: {
-        OR: [{ token: rawQRValue }, { id: rawQRValue }],
-      },
-      include: {
-        registration: {
-          include: { qrCode: true },
-        },
-      },
+    await requireAdmin();
+
+    const value = rawQRValue.trim();
+    if (!value) return { success: false, error: "QR Code kosong." };
+
+    const qrCode = await prisma.qRCode.findUnique({
+      where: { token: value },
+      include: { registration: { include: { qrCode: true } } },
     });
 
     if (!qrCode || !qrCode.registration) {
-      return { success: false, error: "QR Code tidak valid atau tidak ditemukan." };
+      return {
+        success: false,
+        error:
+          "QR Code tidak valid atau sudah tidak berlaku. Jika peserta memakai QR lama (QR grup), minta peserta mengecek email terbaru.",
+      };
     }
 
-    const registration = qrCode.registration;
-
-    if (registration.status !== "confirmed") {
+    if (qrCode.registration.status !== "confirmed") {
       return {
         success: false,
         error: "Pendaftaran ini belum dikonfirmasi. Racepack belum dapat diambil.",
       };
     }
 
-    return { success: true, data: registration as unknown as Registration };
-  } catch {
-    return { success: false, error: "Terjadi kesalahan saat validasi QR." };
+    return { success: true, data: qrCode.registration as unknown as Registration };
+  } catch (error) {
+    return { success: false, error: errorMessage(error) || "Terjadi kesalahan saat validasi QR." };
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CLAIM RACEPACK (Atomic — mencegah race condition)
+// CLAIM RACEPACK (Admin — atomic, sekali pakai)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function claimRacePack(
   registrationId: string,
 ): Promise<ActionResult<Registration>> {
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      // Lock row dan cek status claim terkini
-      const reg = await tx.registration.findUnique({
-        where: { id: registrationId },
-        select: { id: true, qrCodeClaimed: true, status: true },
-      });
+    await requireAdmin();
 
+    // Conditional update = atomic: dua scan bersamaan tidak bisa sama-sama berhasil
+    const claimed = await prisma.registration.updateMany({
+      where: { id: registrationId, status: "confirmed", qrCodeClaimed: false },
+      data: { qrCodeClaimed: true, qrCodeClaimedAt: new Date() },
+    });
+
+    const reg = await prisma.registration.findUnique({
+      where: { id: registrationId },
+      include: { qrCode: true },
+    });
+
+    if (claimed.count === 0) {
       if (!reg) throw new Error("Registrasi tidak ditemukan.");
       if (reg.status !== "confirmed") throw new Error("Pendaftaran belum dikonfirmasi.");
-      if (reg.qrCodeClaimed) throw new Error("Racepack sudah diambil sebelumnya.");
-
-      const updated = await tx.registration.update({
-        where: { id: registrationId },
-        data: { qrCodeClaimed: true, qrCodeClaimedAt: new Date() },
-        include: { qrCode: true },
-      });
-
-      return updated;
-    });
+      throw new Error("Racepack sudah diambil sebelumnya.");
+    }
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/admin");
-    return { success: true, data: result as unknown as Registration };
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error?.message || "Gagal mengklaim racepack.",
-    };
+    return { success: true, data: reg as unknown as Registration };
+  } catch (error) {
+    return { success: false, error: errorMessage(error) || "Gagal mengklaim racepack." };
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// RESEND EMAIL (Admin — menggunakan QR yang sama)
+// RESEND EMAIL (Admin — QR yang sama, dikirim ulang ke email peserta)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function resendRacepackEmail(
   registrationId: string,
 ): Promise<ActionResult<null>> {
   try {
+    await requireAdmin();
+
     const reg = await prisma.registration.findUnique({
       where: { id: registrationId },
-      include: { qrCode: true },
+      select: { id: true, status: true },
     });
-
     if (!reg) return { success: false, error: "Registrasi tidak ditemukan." };
-    if (!reg.qrCode) {
-      return { success: false, error: "QR Code belum dibuat untuk peserta ini." };
-    }
     if (reg.status !== "confirmed") {
       return { success: false, error: "Pendaftaran belum dikonfirmasi." };
     }
 
-    const emailResult = await sendRacepackEmail({
-      to: reg.email,
-      fullName: reg.fullName,
-      qrCodeUrl: reg.qrCode.qrCodeUrl,
-      qrToken: reg.qrCode.token,
-      category: reg.category,
-      jerseySize: reg.jerseySize,
-      chosenPackage: reg.chosenPackage ?? undefined,
-    });
+    // Data lama mungkin belum punya QR individual → buatkan dulu
+    await ensureIndividualQRCodes([registrationId]);
+    const result = await sendQREmailsToParticipants([registrationId], { force: true });
 
-    await prisma.registration.update({
-      where: { id: registrationId },
-      data: {
-        emailStatus: emailResult.success ? "SENT" : "FAILED",
-        emailSentAt: emailResult.success ? new Date() : undefined,
+    revalidatePath("/dashboard/admin");
+
+    if (result.sent === 0) {
+      return { success: false, error: "Gagal mengirim email. Cek RESEND_API_KEY / alamat email peserta." };
+    }
+    return { success: true, data: null, message: "Email QR berhasil dikirim ulang." };
+  } catch (error) {
+    return { success: false, error: errorMessage(error) || "Gagal resend email." };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEND PENDING QR EMAILS (Admin)
+// Untuk data lama setelah migrasi, atau email yang sebelumnya gagal.
+// Diproses per batch agar tidak timeout; jalankan ulang sampai remaining = 0.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PENDING_BATCH_SIZE = 100;
+
+export async function sendPendingRacepackEmails(): Promise<
+  ActionResult<{ sent: number; failed: number; remaining: number }>
+> {
+  try {
+    await requireAdmin();
+
+    const pendingWhere = {
+      status: "confirmed" as const,
+      OR: [{ qrCodeId: null }, { emailStatus: { not: "SENT" as const } }],
+    };
+
+    const batch = await prisma.registration.findMany({
+      where: pendingWhere,
+      select: { id: true },
+      orderBy: { createdAt: "asc" },
+      take: PENDING_BATCH_SIZE,
+    });
+    const ids = batch.map((r) => r.id);
+
+    await ensureIndividualQRCodes(ids);
+    const result = await sendQREmailsToParticipants(ids);
+
+    // Yang gagal tetap FAILED → tidak dihitung lagi agar tidak loop tanpa akhir
+    const remaining = await prisma.registration.count({
+      where: {
+        status: "confirmed",
+        OR: [{ qrCodeId: null }, { emailStatus: "NOT_SENT" }],
       },
     });
 
     revalidatePath("/dashboard/admin");
-
-    if (!emailResult.success) {
-      return { success: false, error: `Gagal mengirim email: ${emailResult.error}` };
-    }
-
-    return { success: true, data: null, message: "Email berhasil dikirim ulang." };
-  } catch (error: any) {
-    return { success: false, error: error?.message || "Gagal resend email." };
+    return {
+      success: true,
+      data: { sent: result.sent, failed: result.failed, remaining },
+      message: `${result.sent} email terkirim, ${result.failed} gagal, ${remaining} tersisa.`,
+    };
+  } catch (error) {
+    return { success: false, error: errorMessage(error) || "Gagal mengirim email tertunda." };
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MAKE QR CODE (Admin manual — untuk registration lama)
+// REGENERATE QR (Peserta sendiri)
+// QR lama langsung tidak berlaku; QR baru dikirim ke email peserta.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function makeQRCode(registrationId: string) {
+export async function regenerateQRCode(
+  registrationId: string,
+): Promise<ActionResult<{ qrCodeUrl: string }>> {
   try {
+    const user = await requireUser();
+
     const registration = await prisma.registration.findUnique({
       where: { id: registrationId },
-      select: { id: true, qrCodeId: true, status: true },
+      select: { id: true, email: true, qrCodeId: true, qrCodeClaimed: true, status: true },
     });
 
-    if (!registration) return { success: false, error: "Not found" };
-    if (registration.qrCodeId) {
-      return { success: false, error: "QR sudah ada untuk peserta ini." };
+    // Hanya peserta pemilik email yang boleh me-regenerate QR-nya sendiri
+    if (
+      !registration ||
+      !user.email ||
+      normalizeEmail(registration.email) !== normalizeEmail(user.email)
+    ) {
+      return { success: false, error: "QR code tidak ditemukan." };
     }
-    if (registration.status !== "confirmed") {
-      return { success: false, error: "Pendaftaran belum dikonfirmasi." };
+    if (registration.status !== "confirmed" || !registration.qrCodeId) {
+      return { success: false, error: "QR code belum tersedia." };
+    }
+    if (registration.qrCodeClaimed) {
+      return { success: false, error: "Cannot regenerate — race pack already claimed" };
     }
 
-    const newQRCode = await prisma.qRCode.create({
-      data: { qrCodeUrl: "", token: "" },
-    });
-
-    const token = newQRCode.id;
+    const oldQrCodeId = registration.qrCodeId;
+    const token = generateQRToken();
     const qrCodeUrl = buildQRCodeUrl(token);
 
-    await prisma.qRCode.update({
-      where: { id: newQRCode.id },
-      data: { token, qrCodeUrl },
+    await prisma.$transaction(async (tx) => {
+      const qr = await tx.qRCode.create({ data: { token, qrCodeUrl } });
+      await tx.registration.update({
+        where: { id: registrationId },
+        data: { qrCodeId: qr.id, emailStatus: "NOT_SENT" },
+      });
+      await tx.qRCode.delete({ where: { id: oldQrCodeId } });
     });
 
-    await prisma.registration.update({
-      where: { id: registrationId },
-      data: { qrCodeId: newQRCode.id },
-    });
+    await sendQREmailsToParticipants([registrationId]);
 
-    revalidatePath("/dashboard/admin");
-    return { success: true };
-  } catch {
-    return { success: false, error: "QR Error" };
+    revalidatePath("/dashboard");
+    return { success: true, data: { qrCodeUrl } };
+  } catch (error) {
+    return { success: false, error: errorMessage(error) || "Failed to regenerate QR code" };
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET REGISTRATIONS
+// DASHBOARD PESERTA
+// - myRegistration: pendaftaran milik user yang login (email = email akun).
+//   Hanya QR ini yang ditampilkan.
+// - registeredByMe: peserta yang didaftarkan akun ini (tanpa QR — QR mereka
+//   dikirim ke email masing-masing agar racepack tidak bisa diambilkan).
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function getUserRegistration(
-  userId: string,
-): Promise<Registration | null> {
-  return (await prisma.registration.findFirst({
-    where: { userId },
-    include: { qrCode: true },
-    orderBy: { createdAt: "desc" },
-  })) as Registration | null;
+export type DashboardParticipant = {
+  id: string;
+  fullName: string;
+  email: string;
+  status: RegistrationStatus;
+  emailStatus: "NOT_SENT" | "SENT" | "FAILED";
+  qrCodeClaimed: boolean;
+};
+
+export async function getDashboardData(): Promise<{
+  myRegistration: Registration | null;
+  registeredByMe: DashboardParticipant[];
+}> {
+  const user = await requireUser();
+
+  const myRegistration = user.email
+    ? await prisma.registration.findFirst({
+        where: { email: { equals: normalizeEmail(user.email), mode: "insensitive" } },
+        include: { qrCode: true },
+        // Utamakan yang tidak cancelled, lalu yang terbaru
+        orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      })
+    : null;
+
+  const registeredByMe = await prisma.registration.findMany({
+    where: { userId: user.id },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      status: true,
+      emailStatus: true,
+      qrCodeClaimed: true,
+    },
+    orderBy: [{ createdAt: "desc" }, { fullName: "asc" }],
+  });
+
+  return {
+    myRegistration: myRegistration as unknown as Registration | null,
+    registeredByMe,
+  };
 }
 
-export async function isAcceptedRegistration(userId: string): Promise<boolean> {
-  const reg = await prisma.registration.findFirst({
-    where: { userId, status: "confirmed" },
-  });
-  return !!reg;
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// GET REGISTRATIONS (Admin)
+// ─────────────────────────────────────────────────────────────────────────────
 
 export async function getAllRegistrations(): Promise<Registration[]> {
+  await requireAdmin();
   const allData = await prisma.registration.findMany({
     include: { user: true, qrCode: true },
     orderBy: { createdAt: "desc" },
@@ -519,54 +705,35 @@ export async function getAllRegistrations(): Promise<Registration[]> {
   return allData as unknown as Registration[];
 }
 
-export async function getGroupParticipants(
-  userId: string,
-  createdAt: Date,
+export async function getRegistrationGroup(
+  registrationId: string,
 ): Promise<Registration[]> {
-  const timeWinStart = new Date(createdAt.getTime() - 60000);
-  const timeWinEnd = new Date(createdAt.getTime() + 60000);
-
+  await requireAdmin();
+  const ids = await findGroupRegistrationIds(registrationId);
   return (await prisma.registration.findMany({
-    where: {
-      userId,
-      createdAt: { gte: timeWinStart, lte: timeWinEnd },
-    },
-    include: { qrCode: true },
-    orderBy: { fullName: "asc" },
-  })) as unknown as Registration[];
-}
-
-export async function getTransactionGroup(
-  userId: string,
-  createdAt: Date,
-): Promise<Registration[]> {
-  const timeWinStart = new Date(createdAt.getTime() - 60000);
-  const timeWinEnd = new Date(createdAt.getTime() + 60000);
-
-  return (await prisma.registration.findMany({
-    where: {
-      userId,
-      createdAt: { gte: timeWinStart, lte: timeWinEnd },
-    },
+    where: { id: { in: ids } },
     include: { qrCode: true },
     orderBy: { fullName: "asc" },
   })) as unknown as Registration[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VOUCHERS
+// VOUCHERS (Admin)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function makeVoucher(category: "CATEGORY_5K") {
+  await requireAdmin();
   await prisma.voucher.create({ data: { category } });
 }
 
 export async function deleteVoucher(id: string) {
+  await requireAdmin();
   await prisma.voucher.delete({ where: { id } });
 }
 
 export async function useVoucher(id: string): Promise<ActionResult<Voucher>> {
   try {
+    await requireAdmin();
     const voucher = await prisma.voucher.update({
       where: { id },
       data: { isUsed: true },
@@ -578,55 +745,6 @@ export async function useVoucher(id: string): Promise<ActionResult<Voucher>> {
 }
 
 export async function getAllVouchers(): Promise<Voucher[]> {
+  await requireAdmin();
   return await prisma.voucher.findMany({ orderBy: { id: "desc" } });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LEGACY — masih digunakan oleh komponen lama, tidak dihapus
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function regenerateQRCode(
-  registrationId: string,
-): Promise<ActionResult<{ qrCodeUrl: string }>> {
-  try {
-    const registration = await prisma.registration.findUnique({
-      where: { id: registrationId },
-      select: { qrCodeId: true, qrCodeClaimed: true },
-    });
-
-    if (!registration || !registration.qrCodeId) {
-      return { success: false, error: "Registration or QR code not found" };
-    }
-
-    if (registration.qrCodeClaimed) {
-      return { success: false, error: "Cannot regenerate — race pack already claimed" };
-    }
-
-    const oldQrCodeId = registration.qrCodeId;
-
-    const newQRCode = await prisma.qRCode.create({
-      data: { qrCodeUrl: "", token: "" },
-    });
-
-    const token = newQRCode.id;
-    const qrCodeUrl = buildQRCodeUrl(token);
-
-    await prisma.qRCode.update({
-      where: { id: newQRCode.id },
-      data: { token, qrCodeUrl },
-    });
-
-    await prisma.registration.update({
-      where: { id: registrationId },
-      data: { qrCodeId: newQRCode.id, emailStatus: "NOT_SENT" },
-    });
-
-    // Hapus QR lama
-    await prisma.qRCode.delete({ where: { id: oldQrCodeId } });
-
-    revalidatePath("/dashboard");
-    return { success: true, data: { qrCodeUrl } };
-  } catch (error: any) {
-    return { success: false, error: error.message || "Failed to regenerate QR code" };
-  }
 }

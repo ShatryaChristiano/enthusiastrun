@@ -1,8 +1,17 @@
-"use server";
-
+// Server-only module: jangan tambahkan "use server" — itu akan membuat
+// fungsi kirim email ini bisa dipanggil publik dari browser.
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Dibuat saat dibutuhkan: tanpa RESEND_API_KEY, konstruktor Resend melempar
+// error yang membuat seluruh modul (dan halaman yang memakainya) crash.
+let resendClient: Resend | null = null;
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  resendClient ??= new Resend(process.env.RESEND_API_KEY);
+  return resendClient;
+}
+
+const MISSING_KEY_ERROR = "RESEND_API_KEY belum diatur di environment.";
 
 const FROM_EMAIL =
   process.env.RESEND_FROM_EMAIL || "Enthusiast Run <onboarding@resend.dev>";
@@ -15,10 +24,36 @@ export interface RacepackEmailParams {
   category: string;
   jerseySize: string;
   chosenPackage?: string;
+  /** Nama akun yang melakukan pendaftaran (jika berbeda dari peserta) */
+  registeredBy?: string;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildRacepackEmail(params: RacepackEmailParams) {
+  return {
+    from: FROM_EMAIL,
+    to: params.to,
+    subject: `🎽 QR Code Racepack kamu sudah siap, ${params.fullName}! — Enthusiast Run`,
+    html: buildRacepackEmailHtml(params),
+  };
 }
 
 function buildRacepackEmailHtml(params: RacepackEmailParams): string {
-  const { fullName, qrCodeUrl, category, jerseySize, chosenPackage } = params;
+  const { fullName, qrCodeUrl, qrToken, category, jerseySize, chosenPackage } =
+    params;
+  const registeredBy =
+    params.registeredBy &&
+    params.registeredBy.trim().toLowerCase() !== fullName.trim().toLowerCase()
+      ? params.registeredBy
+      : null;
 
   const categoryLabel =
     category === "CATEGORY_5K" ? "5K Run" : category;
@@ -186,7 +221,7 @@ function buildRacepackEmailHtml(params: RacepackEmailParams): string {
     </div>
 
     <div class="body">
-      <p class="greeting">Halo, ${fullName}! 👋</p>
+      <p class="greeting">Halo, ${escapeHtml(fullName)}! 👋</p>
       <p class="intro">
         Selamat! Pendaftaranmu untuk <strong>Enthusiast Foam Run Vol. 2</strong> telah dikonfirmasi.
         Berikut adalah <strong>QR Code pribadi</strong> milikmu untuk pengambilan racepack pada hari-H.
@@ -195,9 +230,13 @@ function buildRacepackEmailHtml(params: RacepackEmailParams): string {
 
       <div class="qr-section">
         <div class="qr-label">📱 QR Code Racepack Kamu</div>
-        <img class="qr-img" src="${qrCodeUrl}" alt="QR Code Racepack ${fullName}" width="200" height="200" />
+        <img class="qr-img" src="${qrCodeUrl}" alt="QR Code Racepack ${escapeHtml(fullName)}" width="200" height="200" />
         <p class="qr-warning">
           ⚠️ QR ini HANYA milikmu dan hanya dapat digunakan SATU KALI.
+          Jangan bagikan QR ini ke orang lain.
+        </p>
+        <p style="font-size: 11px; color: #888; margin-top: 10px; word-break: break-all;">
+          Kode cadangan: <strong>${escapeHtml(qrToken)}</strong>
         </p>
       </div>
 
@@ -205,8 +244,16 @@ function buildRacepackEmailHtml(params: RacepackEmailParams): string {
         <div class="info-title">📋 Detail Pendaftaran</div>
         <div class="info-row">
           <span class="info-key">Nama Peserta</span>
-          <span class="info-val">${fullName}</span>
-        </div>
+          <span class="info-val">${escapeHtml(fullName)}</span>
+        </div>${
+          registeredBy
+            ? `
+        <div class="info-row">
+          <span class="info-key">Didaftarkan oleh</span>
+          <span class="info-val">${escapeHtml(registeredBy)}</span>
+        </div>`
+            : ""
+        }
         <div class="info-row">
           <span class="info-key">Kategori</span>
           <span class="info-val">${categoryLabel}</span>
@@ -217,7 +264,7 @@ function buildRacepackEmailHtml(params: RacepackEmailParams): string {
         </div>
         <div class="info-row">
           <span class="info-key">Ukuran Jersey</span>
-          <span class="info-val">${jerseySize}</span>
+          <span class="info-val">${escapeHtml(jerseySize)}</span>
         </div>
       </div>
 
@@ -227,7 +274,8 @@ function buildRacepackEmailHtml(params: RacepackEmailParams): string {
           <li>Datang ke lokasi pengambilan racepack sesuai jadwal yang diumumkan.</li>
           <li>Siapkan QR Code ini di layar ponselmu (atau print).</li>
           <li>Tunjukkan QR Code kepada panitia untuk di-scan.</li>
-          <li>Verifikasi identitasmu jika diminta panitia.</li>
+          <li>Bawa KTP / kartu identitas asli — panitia akan mencocokkan identitasmu.</li>
+          <li>Racepack hanya dapat diambil oleh peserta yang namanya tertera di QR ini.</li>
           <li>Ambil racepack dan selamat bersenang-senang! 🎉</li>
         </ol>
       </div>
@@ -256,13 +304,13 @@ function buildRacepackEmailHtml(params: RacepackEmailParams): string {
 export async function sendRacepackEmail(
   params: RacepackEmailParams,
 ): Promise<{ success: boolean; error?: string }> {
+  const resend = getResend();
+  if (!resend) {
+    console.error("[Email]", MISSING_KEY_ERROR);
+    return { success: false, error: MISSING_KEY_ERROR };
+  }
   try {
-    const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: params.to,
-      subject: `🎽 QR Code Racepack kamu sudah siap, ${params.fullName}! — Enthusiast Run`,
-      html: buildRacepackEmailHtml(params),
-    });
+    const { data, error } = await resend.emails.send(buildRacepackEmail(params));
 
     if (error) {
       console.error("[Email] Resend error:", error);
@@ -271,8 +319,56 @@ export async function sendRacepackEmail(
 
     console.log("[Email] Sent successfully:", data?.id, "→", params.to);
     return { success: true };
-  } catch (err: any) {
+  } catch (err) {
     console.error("[Email] Unexpected error:", err);
-    return { success: false, error: err?.message || "Unknown error" };
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Unknown error",
+    };
   }
+}
+
+const RESEND_BATCH_LIMIT = 100;
+
+/**
+ * Kirim email QR ke banyak peserta sekaligus (satu email per peserta).
+ * Memakai Resend batch API agar tidak terkena rate limit saat satu grup
+ * berisi puluhan peserta. Jika batch gagal, fallback kirim satu per satu
+ * supaya status tiap peserta tetap akurat.
+ * Hasil dikembalikan dengan urutan yang sama dengan input.
+ */
+export async function sendRacepackEmails(
+  paramsList: RacepackEmailParams[],
+): Promise<{ success: boolean; error?: string }[]> {
+  const resend = getResend();
+  if (!resend) {
+    console.error("[Email]", MISSING_KEY_ERROR);
+    return paramsList.map(() => ({ success: false, error: MISSING_KEY_ERROR }));
+  }
+
+  const results: { success: boolean; error?: string }[] = [];
+
+  for (let i = 0; i < paramsList.length; i += RESEND_BATCH_LIMIT) {
+    const chunk = paramsList.slice(i, i + RESEND_BATCH_LIMIT);
+
+    try {
+      const { error } = await resend.batch.send(chunk.map(buildRacepackEmail));
+      if (!error) {
+        console.log(`[Email] Batch sent: ${chunk.length} email(s)`);
+        results.push(...chunk.map(() => ({ success: true })));
+        continue;
+      }
+      console.error("[Email] Batch error, falling back to single sends:", error);
+    } catch (err) {
+      console.error("[Email] Batch threw, falling back to single sends:", err);
+    }
+
+    for (const params of chunk) {
+      results.push(await sendRacepackEmail(params));
+      // Jaga di bawah rate limit default Resend (2 request/detik)
+      await new Promise((r) => setTimeout(r, 600));
+    }
+  }
+
+  return results;
 }

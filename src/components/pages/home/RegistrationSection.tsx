@@ -64,7 +64,7 @@ export function Countdown() {
           {partsArray.map(({ key, label, value }) => (
             <div key={label} className="flex flex-col items-center space-y-2">
               <div
-                className={`flex h-24 py-16 w-full font-impact border-4 border-background shadow-lg items-center justify-center rounded-lg bg-countdown-background shadow-md sm:h-32`}
+                className={`flex h-24 py-16 w-full font-heading border-4 border-background shadow-lg items-center justify-center rounded-lg bg-countdown-background shadow-md sm:h-32`}
               >
                 {mounted && (
                   <Counter
@@ -79,7 +79,7 @@ export function Countdown() {
                 )}
               </div>
 
-              <div className="w-full font-impact rounded-md bg-countdown-background border-4 border-background shadow-lg py-1.5 text-center text-sm font-regular text-[#00476D] sm:py-2 sm:text-base">
+              <div className="w-full font-heading rounded-md bg-countdown-background border-4 border-background shadow-lg py-1.5 text-center text-sm font-regular text-[#00476D] sm:py-2 sm:text-base">
                 {label}
               </div>
             </div>

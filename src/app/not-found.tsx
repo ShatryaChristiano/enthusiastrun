@@ -32,7 +32,7 @@ export default function NotFoundPage() {
             height={500}
             className="absolute bottom-0 md:bottom-0 xl:-bottom-32 w-screen h-auto"
           />
-          <div className="w-[80%] rounded-lg sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col py-[10%] items-center gap-8 font-impact">
+          <div className="w-[80%] rounded-lg sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col py-[10%] items-center gap-8 font-heading">
             <Image
               src="/home/enthusiast-text-logo.webp"
               draggable={false}
@@ -46,7 +46,7 @@ export default function NotFoundPage() {
                 ERROR 404 - PAGE NOT FOUND
               </h1>
             </div>
-            <h3 className="text-xl w-[80%] text-center font-futura max-h-[250px] overflow-y-auto">
+            <h3 className="text-xl w-[80%] text-center font-body max-h-[250px] overflow-y-auto">
               The page you are looking for does not exist.
             </h3>
             <Link

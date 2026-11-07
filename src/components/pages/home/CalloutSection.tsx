@@ -89,7 +89,7 @@ export default function CalloutSection() {
   return (
     <div
       ref={sectionRef}
-      className="sm:p-8 shadow-lg relative z-2 w-screen bg-background border-y-4 border-white flex flex-col py-[10%] items-center sm:items-start gap-8 font-impact"
+      className="sm:p-8 shadow-lg relative z-2 w-screen bg-background border-y-4 border-white flex flex-col py-[10%] items-center sm:items-start gap-8 font-heading"
     >
       <Image
         ref={boltRef}
@@ -116,11 +116,11 @@ export default function CalloutSection() {
       </div>
       <div ref={descRef} className="flex flex-col gap-1 items-center sm:items-start">
         <h3
-          className="text-xl w-[80%] font-bold font-futura text-center sm:text-justify"
+          className="text-xl w-[80%] font-bold font-body text-center sm:text-justify"
         >
           Get ready for an exciting fun run filled with energy, challenges, and togetherness at Enthusiast Vol. 3!
         </h3>
-        <h3 className="about text-2xl w-[80%] font-futura text-center sm:text-justify">
+        <h3 className="about text-2xl w-[80%] font-body text-center sm:text-justify">
           {" "}
           {/* <span className="about font-bold">Enthusiast Foam Run is an annual event held by Ciputra University Surabaya under the Student Organization Department of the Student Union IBM. This event serves as a platform for everyone to embrace an active lifestyle while enjoying a fun and unique running experience through foam-filled courses.</span> */}
           Organized by the <strong>
@@ -129,15 +129,15 @@ export default function CalloutSection() {
         </h3>
       </div>
       <div className="flex gap-1 flex-col w-[80%] items-center sm:items-start">
-        <h3 className="text-xl font-futura text-center sm:text-justify">
+        <h3 className="text-xl font-body text-center sm:text-justify">
           <strong>📍 Location: Universitas Ciputra Surabaya</strong>
         </h3>
       </div>
       <div className="flex gap-1 flex-col w-[80%] items-center sm:items-start">
-        <h3 className="text-xl font-futura text-center sm:text-justify">
+        <h3 className="text-xl font-body text-center sm:text-justify">
           Click the button below to view more informations{" "}
         </h3>
-        <h3 className="text-xl font-futura font-bold text-justify">
+        <h3 className="text-xl font-body font-bold text-justify">
           {"Let's"} run, splash, and chase the thrill!
         </h3>
       </div>

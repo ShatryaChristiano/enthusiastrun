@@ -54,7 +54,7 @@ const COMMUNITY_30_TOTAL_PARTICIPANTS = 30;
 const COMMUNITY_40_TOTAL_PARTICIPANTS = 40;
 
 interface RegistrationFormProps {
-  category: "Category_5K";
+  category: "CATEGORY_5K";
   type: "super_early_bird" | "early_bird" | "regular";
   mahasiswaUCEnabled?: boolean;
 }
@@ -76,7 +76,7 @@ export default function RegistrationForm({
   const [rekeningName, setRekeningName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const is5K = category === "Category_5K";
+  const is5K = category === "CATEGORY_5K";
   const prices =
     type === "super_early_bird"
       ? {
@@ -194,6 +194,18 @@ export default function RegistrationForm({
       if (packageType !== "only_medal" && !p.jerseySize) return toast.error(`Please select jersey size for ${label}`);
       if (!p.idCardUrl) return toast.error(`Please upload ID card for ${label}`);
     }
+    // QR racepack dikirim ke email masing-masing peserta → email wajib unik
+    const seenEmails = new Map<string, number>();
+    for (let i = 0; i < participants.length; i++) {
+      const email = participants[i].email.trim().toLowerCase();
+      const prev = seenEmails.get(email);
+      if (prev !== undefined) {
+        return toast.error(
+          `Participant ${prev + 1} and Participant ${i + 1} use the same email. Each participant must use their own email — the racepack QR code is sent there.`,
+        );
+      }
+      seenEmails.set(email, i);
+    }
     setIsSubmitting(true);
     try {
       const dataList = participants.map((p) => ({
@@ -230,7 +242,7 @@ export default function RegistrationForm({
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto">
       <div className="bg-white p-6 shadow-lg">
-        <h2 className="text-2xl font-impact text-background mb-4">
+        <h2 className="text-2xl font-heading text-background mb-4">
           Select Package
         </h2>
         <div
@@ -242,7 +254,7 @@ export default function RegistrationForm({
             onClick={() => setPackageType("personal")}
             className={`p-6 rounded-xl border-4 ${packageType === "personal" ? "border-[#4BCFFC] bg-[#4BCFFC]/10" : "border-gray-200"}`}
           >
-            <h3 className="text-xl font-impact text-background">Personal</h3>
+            <h3 className="text-xl font-heading text-background">Personal</h3>
             <p className="text-xl font-bold text-background mt-2">
               {formatCurrency(PERSONAL_PRICE)}/person
             </p>
@@ -252,7 +264,7 @@ export default function RegistrationForm({
             onClick={() => setPackageType("bundling")}
             className={`p-6 rounded-xl border-4 ${packageType === "bundling" ? "border-[#4BCFFC] bg-[#4BCFFC]/10" : "border-gray-200"}`}
           >
-            <h3 className="text-xl font-impact text-background">Bundling</h3>
+            <h3 className="text-xl font-heading text-background">Bundling</h3>
             <p className="text-gray-600 mt-2 text-sm">4 Persons!</p>
             <p className="text-xl font-bold text-background mt-2">
               {formatCurrency(BUNDLING_PRICE)}
@@ -264,7 +276,7 @@ export default function RegistrationForm({
             className={`p-6 rounded-xl border-4 ${packageType === "community" ? "border-[#4BCFFC] bg-[#4BCFFC]/10" : "border-gray-200"}`}
             // disabled={true}
           >
-            <h3 className="text-xl font-impact text-background">Community</h3>
+            <h3 className="text-xl font-heading text-background">Community</h3>
             <p className="text-gray-600 mt-2 text-sm">11 Persons!</p>
             <p className="text-xl font-bold text-background mt-2">
               {formatCurrency(COMMUNITY_PRICE)}
@@ -275,7 +287,7 @@ export default function RegistrationForm({
             onClick={() => setPackageType("only_medal")}
             className={`p-6 rounded-xl border-4 ${packageType === "only_medal" ? "border-[#4BCFFC] bg-[#4BCFFC]/10" : "border-gray-200"}`}
           >
-            <h3 className="text-xl font-impact text-background">Only Medal</h3>
+            <h3 className="text-xl font-heading text-background">Only Medal</h3>
             <p className="text-xl font-bold text-background mt-2">
               {formatCurrency(ONLY_MEDAL_PRICE)}/person
             </p>
@@ -285,7 +297,7 @@ export default function RegistrationForm({
             onClick={() => setPackageType("community_package_20")}
             className={`p-6 rounded-xl border-4 ${packageType === "community_package_20" ? "border-[#4BCFFC] bg-[#4BCFFC]/10" : "border-gray-200"}`}
           >
-            <h3 className="text-xl font-impact text-background">Community 20</h3>
+            <h3 className="text-xl font-heading text-background">Community 20</h3>
             <p className="text-gray-600 mt-2 text-sm">20 Persons!</p>
             <p className="text-xl font-bold text-background mt-2">
               {formatCurrency(COMMUNITY_20_PRICE)}
@@ -296,7 +308,7 @@ export default function RegistrationForm({
             onClick={() => setPackageType("community_package_30")}
             className={`p-6 rounded-xl border-4 ${packageType === "community_package_30" ? "border-[#4BCFFC] bg-[#4BCFFC]/10" : "border-gray-200"}`}
           >
-            <h3 className="text-xl font-impact text-background">Community 30</h3>
+            <h3 className="text-xl font-heading text-background">Community 30</h3>
             <p className="text-gray-600 mt-2 text-sm">30 Persons!</p>
             <p className="text-xl font-bold text-background mt-2">
               {formatCurrency(COMMUNITY_30_PRICE)}
@@ -307,7 +319,7 @@ export default function RegistrationForm({
             onClick={() => setPackageType("community_package_40")}
             className={`p-6 rounded-xl border-4 ${packageType === "community_package_40" ? "border-[#4BCFFC] bg-[#4BCFFC]/10" : "border-gray-200"}`}
           >
-            <h3 className="text-xl font-impact text-background">Community 40</h3>
+            <h3 className="text-xl font-heading text-background">Community 40</h3>
             <p className="text-gray-600 mt-2 text-sm">40 Persons!</p>
             <p className="text-xl font-bold text-background mt-2">
               {formatCurrency(COMMUNITY_40_PRICE)}
@@ -320,7 +332,7 @@ export default function RegistrationForm({
               onClick={() => setPackageType("ucstudent")}
               className={`p-6 rounded-xl border-4 ${packageType === "ucstudent" ? "border-[#4BCFFC] bg-[#4BCFFC]/10" : "border-gray-200"}`}
             >
-              <h3 className="text-xl font-impact text-background">
+              <h3 className="text-xl font-heading text-background">
                 UC Student
               </h3>
               <p className="text-xl font-bold text-background mt-2">
@@ -353,7 +365,7 @@ export default function RegistrationForm({
         {/* Size chart ditampilkan sekali di atas Participant 1 */}
         {packageType !== "only_medal" && (
           <div className="bg-white p-6 shadow-lg border-b-2 border-gray-100">
-            <h2 className="text-2xl font-impact text-background mb-4">Size Chart</h2>
+            <h2 className="text-2xl font-heading text-background mb-4">Size Chart</h2>
             <Image
               src="/registration/size-chart-new.webp"
               className="w-full h-auto rounded-lg"
@@ -384,7 +396,7 @@ export default function RegistrationForm({
 
       {totalPrice > 0 && (
         <div className="bg-amber-50 border-4 border-amber-400 p-6">
-          <h2 className="text-2xl font-impact text-background mb-4">
+          <h2 className="text-2xl font-heading text-background mb-4">
             Payment Information
           </h2>
           <div className="bg-white p-4 space-y-2 text-gray-700">
@@ -408,7 +420,7 @@ export default function RegistrationForm({
 
       {totalPrice > 0 && (
         <div className="bg-white p-6 shadow-lg border-b-2 border-gray-100">
-          <h2 className="text-2xl font-impact text-background mb-4">
+          <h2 className="text-2xl font-heading text-background mb-4">
             Payment Confirmation
           </h2>
           <input
@@ -422,7 +434,7 @@ export default function RegistrationForm({
       )}
 
       <div className="bg-white p-6 shadow-lg">
-        <h2 className="text-2xl font-impact text-background mb-4">Summary</h2>
+        <h2 className="text-2xl font-heading text-background mb-4">Summary</h2>
         <div className="space-y-3">
           <div className="flex justify-between text-gray-600">
             <span>
@@ -483,7 +495,7 @@ export default function RegistrationForm({
 
       {totalPrice > 0 && (
         <div className="bg-white p-6 shadow-lg">
-          <h2 className="text-2xl font-impact text-background mb-4">
+          <h2 className="text-2xl font-heading text-background mb-4">
             Upload Payment Proof
           </h2>
           {!paymentProofUrl ? (
@@ -515,7 +527,7 @@ export default function RegistrationForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`w-full mt-6 py-4 rounded-xl font-impact text-xl text-white ${isSubmitting ? "bg-gray-400" : "bg-[#4BCFFC]"}`}
+          className={`w-full mt-6 py-4 rounded-xl font-heading text-xl text-white ${isSubmitting ? "bg-gray-400" : "bg-[#4BCFFC]"}`}
         >
           {isSubmitting
             ? "PROCESSING..."

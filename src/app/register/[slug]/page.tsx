@@ -87,7 +87,7 @@ export default function RegistrationPage() {
           height={500}
           className="absolute bottom-0 md:bottom-0 xl:-bottom-32 w-screen h-auto"
         />
-        <div className="w-[80%] rounded-lg py-[20%] sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col items-center gap-8 font-impact">
+        <div className="w-[80%] rounded-lg py-[20%] sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col items-center gap-8 font-heading">
           <Image
             src="/home/enthusiast-text-logo.webp"
             draggable={false}
@@ -138,11 +138,11 @@ export default function RegistrationPage() {
             isAdminClickable={isAdmin}
           />
           
-          <div className="flex flex-col font-futura w-full justify-center items-center gap-1">
+          <div className="flex flex-col font-body w-full justify-center items-center gap-1">
             <h3 className="text-xl">Have a voucher?</h3>
             <Link
               href={"/register/redeem-code"}
-              className="bg-[#4BCFFC] text-background gap-2 px-4 py-2 font-impact shadow-2xl border-3 border-white rounded-lg hover:bg-[#3AA9D1] flex justify-center items-center z-50"
+              className="bg-[#4BCFFC] text-background gap-2 px-4 py-2 font-heading shadow-2xl border-3 border-white rounded-lg hover:bg-[#3AA9D1] flex justify-center items-center z-50"
             >
               REDEEM CODE
             </Link>

@@ -60,7 +60,7 @@ export default function ParticipantForm({
           <span className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white font-bold">
             {index + 1}
           </span>
-          <span className="text-white font-impact text-xl">
+          <span className="text-white font-heading text-xl">
             {data.fullName || `Participant ${index + 1}`}
             {isBundling && index === 10 && (
               <span className="ml-2 px-2 py-1 bg-green-400 text-green-900 text-xs rounded-full font-normal">
@@ -117,6 +117,9 @@ export default function ParticipantForm({
                   placeholder="email@example.com"
                   className={inputClasses}
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Use the participant&apos;s own email — their personal racepack QR code will be sent here.
+                </p>
               </div>
 
               <div>

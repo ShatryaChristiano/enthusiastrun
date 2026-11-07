@@ -3,7 +3,10 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Registration } from "@/types/registration.md";
-import { updateRegistrationStatus } from "@/lib/registration";
+import {
+  updateRegistrationStatus,
+  sendPendingRacepackEmails,
+} from "@/lib/registration";
 import { toast } from "sonner";
 import RegistrationDetailModal from "./RegistrationDetailModal";
 
@@ -17,6 +20,13 @@ export default function RegistrationTable({
   const router = useRouter();
   const [registrations, setRegistrations] =
     useState<Registration[]>(initialRegistrations);
+  // Sinkronkan dengan data server setiap router.refresh() (mis. QR/email
+  // baru dibuat setelah konfirmasi) — state lokal hanya untuk update optimistik.
+  const [prevInitial, setPrevInitial] = useState(initialRegistrations);
+  if (initialRegistrations !== prevInitial) {
+    setPrevInitial(initialRegistrations);
+    setRegistrations(initialRegistrations);
+  }
   const [selectedReg, setSelectedReg] = useState<Registration | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filter, setFilter] = useState<
@@ -114,6 +124,25 @@ export default function RegistrationTable({
     setUpdatingId(null);
   };
 
+  const [sendingPending, setSendingPending] = useState(false);
+
+  const handleSendPending = async () => {
+    setSendingPending(true);
+    const result = await sendPendingRacepackEmails();
+    if (result.success) {
+      toast.success(result.message || "Selesai");
+      router.refresh();
+    } else {
+      toast.error(result.error || "Gagal mengirim email QR");
+    }
+    setSendingPending(false);
+  };
+
+  // Peserta confirmed yang belum punya QR / email QR belum terkirim
+  const pendingQREmails = registrations.filter(
+    (r) => r.status === "confirmed" && (!r.qrCode || r.emailStatus !== "SENT"),
+  ).length;
+
   const openModal = (reg: Registration) => {
     setSelectedReg(reg);
     setIsModalOpen(true);
@@ -131,11 +160,11 @@ export default function RegistrationTable({
     return matchStatus && matchCategory && matchSearch;
   });
 
-  // Group registrations by userId and createdAt time bucket (1 min) instead of qrCodeId
+  // Satu baris per transaksi pendaftaran (groupId). Data lama tanpa groupId
+  // dikelompokkan per userId + menit createdAt seperti sebelumnya.
   const groupedForDisplay = filteredRegistrations.reduce((acc, reg) => {
-    const timeMs = new Date(reg.createdAt).getTime();
-    const timeBucket = Math.floor(timeMs / 60000);
-    const groupKey = `${reg.userId}-${timeBucket}`;
+    const timeBucket = Math.floor(new Date(reg.createdAt).getTime() / 60000);
+    const groupKey = reg.groupId ?? `${reg.userId}-${timeBucket}`;
     if (!acc.has(groupKey)) {
       acc.set(groupKey, reg); // Keep first registration as representative
     }
@@ -162,23 +191,23 @@ export default function RegistrationTable({
     <div className="w-[90%] md:w-full space-y-6 mt-4 md:mt-12">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white/20 border border-white/40 rounded-lg p-4 text-center">
-          <p className="text-3xl font-impact text-white">{stats.total}</p>
+          <p className="text-3xl font-heading text-white">{stats.total}</p>
           <p className="text-white/70 text-sm">Total</p>
         </div>
         <div className="bg-yellow-500/20 border border-yellow-500 rounded-lg p-4 text-center">
-          <p className="text-3xl font-impact text-yellow-300">
+          <p className="text-3xl font-heading text-yellow-300">
             {stats.pending}
           </p>
           <p className="text-yellow-300/70 text-sm">Pending</p>
         </div>
         <div className="bg-green-500/20 border border-green-500 rounded-lg p-4 text-center">
-          <p className="text-3xl font-impact text-green-300">
+          <p className="text-3xl font-heading text-green-300">
             {stats.confirmed}
           </p>
           <p className="text-green-300/70 text-sm">Confirmed</p>
         </div>
         <div className="bg-red-500/20 border border-red-500 rounded-lg p-4 text-center">
-          <p className="text-3xl font-impact text-red-300">{stats.cancelled}</p>
+          <p className="text-3xl font-heading text-red-300">{stats.cancelled}</p>
           <p className="text-red-300/70 text-sm">Cancelled</p>
         </div>
       </div>
@@ -234,6 +263,14 @@ export default function RegistrationTable({
             5K Run
           </option>
         </select>
+        <button
+          onClick={handleSendPending}
+          disabled={sendingPending || pendingQREmails === 0}
+          title="Buat QR individual & kirim ke email peserta confirmed yang belum menerima QR"
+          className="px-4 py-2 bg-[#4BCFFC] hover:bg-[#3AA9D1] text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {sendingPending ? "Mengirim..." : `Kirim QR yang tertunda (${pendingQREmails})`}
+        </button>
         <button
           onClick={handleExportToExcel}
           className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition font-medium"

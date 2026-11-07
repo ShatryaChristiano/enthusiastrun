@@ -71,8 +71,8 @@ export default async function NormalRegistrationPage({ params }: Slug) {
               height={100}
               className="mx-auto mb-4"
             />
-            <h1 className="text-4xl font-impact">REGISTRATION FORM</h1>
-            <p className="text-xl font-futura mt-2">{slug.toUpperCase()} Run</p>
+            <h1 className="text-4xl font-heading">REGISTRATION FORM</h1>
+            <p className="text-xl font-body mt-2">{slug.toUpperCase()} Run</p>
           </div>
         </div>
 

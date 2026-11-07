@@ -1,6 +1,5 @@
 import React from "react";
 import Image from "next/image";
-import { getAllRegistrations } from "@/lib/registration";
 import { getServerSession } from "next-auth/next";
 import UserNotLoggedIn from "@/components/auth/UserNotLoggedIn";
 import QrCodeScanner from "@/components/pages/dashboard/admin/QRCodeScanner";
@@ -37,7 +36,7 @@ export default async function page() {
           height={500}
           className="absolute bottom-0 md:bottom-0 xl:-bottom-32 w-screen h-auto"
         />
-        <div className="w-[80%] sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col py-[10%] items-center gap-8 font-impact">
+        <div className="w-[80%] sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col py-[10%] items-center gap-8 font-heading">
           <Image
             src="/home/enthusiast-text-logo.webp"
             draggable={false}

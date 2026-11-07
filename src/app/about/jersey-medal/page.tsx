@@ -34,7 +34,7 @@ export default function page() {
           height={500}
           className="absolute bottom-0 md:bottom-0 xl:-bottom-32 w-screen h-auto"
         />
-        <div className="w-[80%] sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col py-[15%] items-center gap-8 font-impact">
+        <div className="w-[80%] sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col py-[15%] items-center gap-8 font-heading">
           <Image
             src="/home/enthusiast-text-logo.webp"
             draggable={false}
@@ -48,11 +48,11 @@ export default function page() {
               JERSEY & MEDAL DETAILS
             </h1>
           </div>
-          <h3 className="text-xl w-[80%] font-futura text-justify max-h-[250px] overflow-y-auto">
+          <h3 className="text-xl w-[80%] font-body text-justify max-h-[250px] overflow-y-auto">
             Participants of Enthusiast Run will receive a medal, jersey, and race pack.
             The medal serves as a symbol of achievement for participants who successfully complete the colorful and exciting run.
           </h3>
-          <h3 className="text-xl w-[80%] font-futura text-justify max-h-[250px] overflow-y-auto">The jersey is designed with lightweight and comfortable material, making it perfect for running while still looking fashionable.</h3>
+          <h3 className="text-xl w-[80%] font-body text-justify max-h-[250px] overflow-y-auto">The jersey is designed with lightweight and comfortable material, making it perfect for running while still looking fashionable.</h3>
           <Image
             src="/about/jersey-medal.webp"
             draggable={false}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Montserrat } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { Provider } from "@/components/pages/layout/Provider";
@@ -10,9 +11,21 @@ import Footer from "@/components/pages/layout/Footer";
 import FloatingActionButton from "@/components/pages/layout/FloatingActionButton";
 import { Toaster } from "@/components/ui/sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Heading font (provided by client)
+const morway = localFont({
+  src: [
+    { path: "../fonts/Morway-Regular.otf", weight: "400", style: "normal" },
+    { path: "../fonts/Morway-Italic.otf", weight: "400", style: "italic" },
+  ],
+  variable: "--font-morway",
+  display: "swap",
+});
+
+// Sub-heading / body font
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -35,7 +48,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
+        className={`${morway.variable} ${montserrat.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
       >
         <Provider session={session}>
           <Navbar />

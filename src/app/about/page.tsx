@@ -37,7 +37,7 @@ export default function page() {
           height={500}
           className="absolute bottom-0 md:bottom-0 xl:-bottom-32 w-screen h-auto"
         />
-        <div className="w-[80%] rounded-lg py-16 sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col mt-[5.5%] items-center gap-8 font-impact">
+        <div className="w-[80%] rounded-lg py-16 sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col mt-[5.5%] items-center gap-8 font-heading">
           <Image
             src="/home/enthusiast-text-logo.webp"
             draggable={false}
@@ -53,10 +53,10 @@ export default function page() {
           </div>
           <Countdown></Countdown>
           <div className="flex flex-col gap-1 justify-center items-center w-full">
-            <h3 className="text-xl w-[80%] font-futura text-justify max-h-[250px] overflow-y-auto">
+            <h3 className="text-xl w-[80%] font-body text-justify max-h-[250px] overflow-y-auto">
               <span className="font-bold">Enthusiast Run</span> is an event that invites you to push your limits and share the fun with friends. <span className="font-bold"> Enthusiast Vol. 2 presents</span> with <span className="font-bold">Foam Run theme</span> and offers a unique experience to running through foam.
             </h3>
-            <h3 className="text-xl w-[80%] font-futura text-justify max-h-[250px] overflow-y-auto">
+            <h3 className="text-xl w-[80%] font-body text-justify max-h-[250px] overflow-y-auto">
               <span className="font-bold">Enthusiast Foam Run</span> creates a space to enjoy exercise without pressure.
               A bigger concept and more excitement awaits, Join us and break your limits.
             </h3>
@@ -64,7 +64,7 @@ export default function page() {
           </div>
         </div>
         <div
-          className="w-[80%] rounded-lg py-16 sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col mt-[2.5%] items-center gap-8 font-impact"
+          className="w-[80%] rounded-lg py-16 sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col mt-[2.5%] items-center gap-8 font-heading"
         >
           <div className="w-full flex flex-col items-center p-4 sm:p-0 gap-12">
             {/* <FlagOffItem flagType="10K" flagOffTime="05:15" cutOffTime="02:00:00" /> */}

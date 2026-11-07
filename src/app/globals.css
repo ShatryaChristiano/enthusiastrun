@@ -1,29 +1,5 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'Hemi Head';
-  src: url('/fonts/hemi-head.otf') format('opentype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Impact';
-  src: url('/fonts/impact.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Futura';
-  src: url('/fonts/FuturaCyrillicMedium.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   --background: #00476d;
   --foreground: #ededed;
@@ -34,11 +10,10 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-countdown-background: var(--countdown-background);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-montserrat), sans-serif;
   --font-mono: var(--font-geist-mono);
-  --font-hemi: 'Hemi Head', sans-serif;
-  --font-impact: 'Impact', sans-serif;
-  --font-futura: 'Futura', sans-serif;
+  --font-heading: var(--font-morway), sans-serif;
+  --font-body: var(--font-montserrat), sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -52,5 +27,6 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-futura);
+  /* @theme inline tokens aren't emitted as CSS vars, so reference next/font's var directly */
+  font-family: var(--font-montserrat), sans-serif;
 }

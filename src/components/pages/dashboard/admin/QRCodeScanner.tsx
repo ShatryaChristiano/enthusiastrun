@@ -13,11 +13,21 @@ export default function QrCodeScanner() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [claimSuccess, setClaimSuccess] = useState(false);
+  const [manualCode, setManualCode] = useState("");
 
   const handleScan = async (decodedResults: IDetectedBarcode[]) => {
     if (decodedResults?.length === 0 || scanState !== "scanning") return;
+    await validate(decodedResults[0].rawValue);
+  };
 
-    const rawValue = decodedResults[0].rawValue;
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualCode.trim()) return;
+    await validate(manualCode.trim());
+    setManualCode("");
+  };
+
+  const validate = async (rawValue: string) => {
     setScanState("idle"); // stop scanning
 
     const result = await validateRegistrationQR(rawValue);
@@ -84,7 +94,7 @@ export default function QrCodeScanner() {
       {/* SCANNER */}
       {scanState === "scanning" && (
         <div className="space-y-4">
-          <p className="text-white/70 text-sm text-center font-futura">
+          <p className="text-white/70 text-sm text-center font-body">
             Arahkan kamera ke QR Code peserta
           </p>
           <div className="aspect-square overflow-hidden rounded-2xl border-4 border-white/60 shadow-2xl">
@@ -100,6 +110,20 @@ export default function QrCodeScanner() {
               SCANNING...
             </span>
           </div>
+          <form onSubmit={handleManualSubmit} className="flex gap-2">
+            <input
+              value={manualCode}
+              onChange={(e) => setManualCode(e.target.value)}
+              placeholder="Atau ketik kode cadangan dari email"
+              className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-white/10 border border-white/30 text-white text-sm placeholder:text-white/40 font-body focus:outline-none focus:border-[#4BCFFC]"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-lg bg-[#4BCFFC] hover:bg-[#3AA9D1] text-white text-sm font-bold"
+            >
+              CEK
+            </button>
+          </form>
         </div>
       )}
 
@@ -165,6 +189,30 @@ export default function QrCodeScanner() {
                 <StatusBadge claimed={participant.qrCodeClaimed} />
               </div>
             </div>
+
+            {/* Verifikasi identitas: cocokkan orang yang datang dengan KTP peserta */}
+            {!participant.qrCodeClaimed && !claimSuccess && (
+              <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-3 text-xs text-yellow-800 font-body">
+                Pastikan yang mengambil adalah <strong>{participant.fullName}</strong> —
+                cocokkan wajah &amp; nama dengan kartu identitas di bawah. QR ini
+                hanya berlaku untuk peserta ini.
+              </div>
+            )}
+            {participant.idCardUrl && (
+              <a
+                href={participant.idCardUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="block rounded-xl overflow-hidden border-2 border-gray-200"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={participant.idCardUrl}
+                  alt={`Kartu identitas ${participant.fullName}`}
+                  className="w-full max-h-56 object-contain bg-gray-100"
+                />
+              </a>
+            )}
 
             <div className="grid grid-cols-2 gap-3 bg-gray-50 rounded-xl p-4">
               <div>

@@ -64,15 +64,21 @@ model Registration {
   emailStatus     EmailStatus @default(NOT_SENT)
   emailSentAt     DateTime?
 
+  // Semua peserta yang didaftarkan dalam satu transaksi (satu bukti bayar)
+  // berbagi groupId yang sama. Null untuk data lama (fallback: userId + createdAt ±60s).
+  groupId String?
+
+  // Satu QR = satu peserta. SetNull agar menghapus QR tidak ikut menghapus pendaftaran.
   qrCodeId  String?  @unique
-  qrCode    QRCode?  @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
+  qrCode    QRCode?  @relation(fields: [qrCodeId], references: [id], onDelete: SetNull)
   voucherId String?
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  voucher   Voucher? @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  voucher   Voucher? @relation(fields: [voucherId], references: [id], onDelete: SetNull)
 
   @@index([email])
   @@index([phoneNumber])
   @@index([userId])
+  @@index([groupId])
 }
 
 model QRCode {

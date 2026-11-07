@@ -79,6 +79,7 @@ export interface Registration extends RegistrationData {
   paymentStatus: boolean;
   paymentDate?: Date | null;
   createdAt: Date;
+  groupId?: string | null;
   qrCodeId?: string | null;
   qrCodeClaimed?: boolean | null;
   qrCodeClaimedAt?: Date | null;

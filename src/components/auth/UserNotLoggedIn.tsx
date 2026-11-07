@@ -31,7 +31,7 @@ export default function UserNotLoggedIn() {
             height={500}
             className="absolute bottom-0 md:bottom-0 xl:-bottom-32 w-screen h-auto"
           />
-          <div className="w-[80%] sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col py-[10%] items-center gap-8 font-impact">
+          <div className="w-[80%] sm:p-8 shadow-lg relative z-2 bg-background border-4 border-white flex flex-col py-[10%] items-center gap-8 font-heading">
             <Image
               src="/home/enthusiast-text-logo.webp"
               draggable={false}
@@ -43,7 +43,7 @@ export default function UserNotLoggedIn() {
             <div className="mt-[2.5%] flex flex-col gap-2 items-center sm:items-start text-center sm:text-start">
               <h1 className="text-4xl w-[90%] sm:w-full">WARNING</h1>
             </div>
-            <h3 className="text-xl text-center font-futura">
+            <h3 className="text-xl text-center font-body">
               You must be logged in to access this page!
             </h3>
             <GoogleLogin />

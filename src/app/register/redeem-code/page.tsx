@@ -42,8 +42,8 @@ export default function NormalRegistrationPage() {
               height={100}
               className="mx-auto mb-4"
             />
-            <h1 className="text-4xl font-impact">REGISTRATION FORM</h1>
-            <p className="text-xl font-futura mt-2">Run Category</p>
+            <h1 className="text-4xl font-heading">REGISTRATION FORM</h1>
+            <p className="text-xl font-body mt-2">Run Category</p>
           </div>
         </div>
         <div className="relative z-10 w-full pb-32">

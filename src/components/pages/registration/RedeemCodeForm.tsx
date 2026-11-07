@@ -193,7 +193,7 @@ export default function RedeemCodeForm() {
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto">
       <div className="bg-white p-6 shadow-lg">
-        <h2 className="text-2xl font-impact text-background mb-4">
+        <h2 className="text-2xl font-heading text-background mb-4">
           Voucher Code
         </h2>
         <input
@@ -215,11 +215,11 @@ export default function RedeemCodeForm() {
       </div>
 
       <div className="bg-white p-6 shadow-lg">
-        <h2 className="text-2xl font-impact text-background mb-4">Summary</h2>
+        <h2 className="text-2xl font-heading text-background mb-4">Summary</h2>
         <div className="space-y-3">
           <div className="flex justify-between text-gray-600">
             <span>Pendaftaran Peserta (Voucher)</span>
-            <span className="text-green-600 font-bold font-impact">FREE</span>
+            <span className="text-green-600 font-bold font-heading">FREE</span>
           </div>
 
           {participants.some(
@@ -267,7 +267,7 @@ export default function RedeemCodeForm() {
       {calculateTotal() > 0 && (
         <>
           <div className="bg-amber-50 border-4 border-amber-400 p-6">
-            <h2 className="text-2xl font-impact text-background mb-4">
+            <h2 className="text-2xl font-heading text-background mb-4">
               Payment Information
             </h2>
             <div className="bg-white p-4 space-y-2 text-gray-700">
@@ -289,7 +289,7 @@ export default function RedeemCodeForm() {
           </div>
 
           <div className="bg-white p-6 shadow-lg">
-            <h2 className="text-2xl font-impact text-background mb-4">
+            <h2 className="text-2xl font-heading text-background mb-4">
               Upload Payment Proof
             </h2>
             {!paymentProofUrl ? (
@@ -333,7 +333,7 @@ export default function RedeemCodeForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`w-full mt-6 py-4 rounded-xl font-impact text-xl text-white ${isSubmitting ? "bg-gray-400" : "bg-[#4BCFFC] hover:bg-[#3AA9D1]"}`}
+          className={`w-full mt-6 py-4 rounded-xl font-heading text-xl text-white ${isSubmitting ? "bg-gray-400" : "bg-[#4BCFFC] hover:bg-[#3AA9D1]"}`}
         >
           {isSubmitting
             ? "PROCESSING..."

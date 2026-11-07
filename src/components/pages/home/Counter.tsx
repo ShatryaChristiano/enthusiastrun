@@ -145,7 +145,7 @@ export default function Counter({
   };
 
   return (
-    <div className="font-impact" style={{ ...defaultContainerStyle, ...containerStyle }}>
+    <div className="font-heading" style={{ ...defaultContainerStyle, ...containerStyle }}>
       <div style={{ ...defaultCounterStyle, ...counterStyle }}>
         {places.map(place => (
           <Digit key={place} place={place} value={value} height={height} digitStyle={digitStyle} />

@@ -31,6 +31,14 @@ export async function DELETE(
       );
     }
 
+    // Voucher yang sudah dipakai terhubung ke pendaftaran peserta → jangan dihapus
+    if (voucher.isUsed) {
+      return NextResponse.json(
+        { success: false, message: "Voucher sudah digunakan dan tidak dapat dihapus" },
+        { status: 400 }
+      );
+    }
+
     // Delete voucher
     await prisma.voucher.delete({
       where: { id },
