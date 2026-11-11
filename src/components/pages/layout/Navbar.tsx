@@ -107,51 +107,54 @@ export default function Navbar() {
             </div>
             <span className="w-[90%] h-0.5 opacity-50 bg-white"></span>
             <div className="flex flex-col gap-2">
-              <h3 className="text-white/60">ABOUT</h3>
-              <Link
-                href="/about"
-                rel="about"
-                className="text-white font-body hover:text-[#4BCFFC]"
-                onClick={closeSheet}
-              >
+              <h3 className="text-white/60">RUN</h3>
+              <Link href="/about" className="text-white font-body hover:text-[#4BCFFC]" onClick={closeSheet}>
                 ENTHUSIAST RUN
               </Link>
-              <Link
-                href="/about/jersey-medal"
-                rel="jersey and medal"
-                className="text-white font-body hover:text-[#4BCFFC]"
-                onClick={closeSheet}
-              >
-                JERSEY & MEDAL
+              <Link href="/about/jersey-medal" className="text-white font-body hover:text-[#4BCFFC]" onClick={closeSheet}>
+                JERSEY
               </Link>
-              <Link
-                href="/about/race-venue"
-                rel="racepack collection venue"
-                className="text-white font-body hover:text-[#4BCFFC]"
-                onClick={closeSheet}
-              >
+              <Link href="/about/race-venue" className="text-white font-body hover:text-[#4BCFFC]" onClick={closeSheet}>
                 RACE PACK COLLECTION VENUE
               </Link>
-              <Link
-                href="/about/tm"
-                rel="technical meeting"
-                className="text-white font-body hover:text-[#4BCFFC]"
-                onClick={closeSheet}
-              >
+              <Link href="/about/tm" className="text-white font-body hover:text-[#4BCFFC]" onClick={closeSheet}>
                 TECHNICAL MEETING
+              </Link>
+              <Link href="/route" className="text-white font-body hover:text-[#4BCFFC]" onClick={closeSheet}>
+                ROUTE
               </Link>
             </div>
             <span className="w-[90%] h-0.5 opacity-50 bg-white"></span>
-            {/* Registration Section */}
+            <div className="flex flex-col gap-2">
+              <h3 className="text-white/60">LACC</h3>
+              <Link href="#" className="text-white font-body hover:text-[#4BCFFC]" onClick={closeSheet}>
+                PLACEHOLDER 1
+              </Link>
+              <Link href="#" className="text-white font-body hover:text-[#4BCFFC]" onClick={closeSheet}>
+                PLACEHOLDER 2
+              </Link>
+            </div>
+            <span className="w-[90%] h-0.5 opacity-50 bg-white"></span>
+            <div className="flex flex-col gap-2">
+              <h3 className="text-white/60">PADEL</h3>
+              <Link href="#" className="text-white font-body hover:text-[#4BCFFC]" onClick={closeSheet}>
+                PLACEHOLDER 1
+              </Link>
+              <Link href="#" className="text-white font-body hover:text-[#4BCFFC]" onClick={closeSheet}>
+                PLACEHOLDER 2
+              </Link>
+            </div>
+            <span className="w-[90%] h-0.5 opacity-50 bg-white"></span>
             <div className="flex flex-col gap-2">
               <h3 className="text-white/60">REGISTRATION</h3>
-              <Link
-                href="/register/CATEGORY_5K"
-                rel="registration 5k"
-                className="text-white font-body hover:text-[#4BCFFC]"
-                onClick={closeSheet}
-              >
-                5K RUN
+              <Link href="/register/CATEGORY_5K" className="text-white font-body hover:text-[#4BCFFC]" onClick={closeSheet}>
+                RUN
+              </Link>
+              <Link href="#" className="text-white font-body hover:text-[#4BCFFC]" onClick={closeSheet}>
+                PADEL
+              </Link>
+              <Link href="#" className="text-white font-body hover:text-[#4BCFFC]" onClick={closeSheet}>
+                LACC
               </Link>
             </div>
             <span className="w-[90%] h-0.5 opacity-50 bg-white"></span>
@@ -164,14 +167,6 @@ export default function Navbar() {
                 onClick={closeSheet}
               >
                 PARTNERSHIP
-              </Link>
-              <Link
-                href="/route"
-                rel="route"
-                className="text-white font-body hover:text-[#4BCFFC]"
-                onClick={closeSheet}
-              >
-                ROUTE
               </Link>
               <Link
                 href="/contact"
@@ -190,31 +185,39 @@ export default function Navbar() {
       {/* Desktop Menu */}
       <div className="hidden md:flex font-heading text-xl gap-4 justify-center items-center font-regular">
         <TextDropdownPanel
-          label="ABOUT"
+          label="RUN"
           items={[
             { item_label: "ENTHUSIAST RUN", item_href: "/about" },
-            { item_label: "JERSEY & MEDAL", item_href: "/about/jersey-medal" },
-            {
-              item_label: "RACE PACK COLLECTION VENUE",
-              item_href: "/about/race-venue",
-            },
-            {
-              item_label: "TECHNICAL MEETING",
-              item_href: "/about/tm",
-            },
+            { item_label: "JERSEY", item_href: "/about/jersey-medal" },
+            { item_label: "RACE PACK COLLECTION VENUE", item_href: "/about/race-venue" },
+            { item_label: "TECHNICAL MEETING", item_href: "/about/tm" },
+            { item_label: "ROUTE", item_href: "/route" },
+          ]}
+        ></TextDropdownPanel>
+        <TextDropdownPanel
+          label="LACC"
+          items={[
+            { item_label: "PLACEHOLDER 1", item_href: "#" },
+            { item_label: "PLACEHOLDER 2", item_href: "#" },
+          ]}
+        ></TextDropdownPanel>
+        <TextDropdownPanel
+          label="PADEL"
+          items={[
+            { item_label: "PLACEHOLDER 1", item_href: "#" },
+            { item_label: "PLACEHOLDER 2", item_href: "#" },
           ]}
         ></TextDropdownPanel>
         <TextDropdownPanel
           label="REGISTRATION"
           items={[
-            { item_label: "5K RUN", item_href: "/register/CATEGORY_5K" },
+            { item_label: "RUN", item_href: "/register/CATEGORY_5K" },
+            { item_label: "PADEL", item_href: "#" },
+            { item_label: "LACC", item_href: "#" },
           ]}
         ></TextDropdownPanel>
         <Link href="/partnership" rel="partnership" className="text-white hover:underline">
           PARTNERSHIP
-        </Link>
-        <Link href="/route" rel="route" className="text-white hover:underline">
-          ROUTE
         </Link>
         <Link href="/contact" rel="contact" className="text-white hover:underline">
           CONTACT
